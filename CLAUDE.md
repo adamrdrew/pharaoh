@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is Pharaoh?
 
-A filesystem-based job runner built on the Claude Agent SDK. Pharaoh watches `.ushabti/dispatch/` for markdown files containing phase prompts, executes them via the Claude Agent SDK's `ir-kat` skill (Ushabti Scribe → Builder → Overseer loop), and reports status through `.ushabti/service.json`.
+A filesystem-based job runner built on the Claude Agent SDK. Pharaoh watches `.pharaoh/dispatch/` for markdown files containing phase prompts, executes them via the Claude Agent SDK's `ir-kat` skill (Ushabti Scribe → Builder → Overseer loop), and reports status through `pharaoh.json`.
 
 ## Commands
 
@@ -19,31 +19,40 @@ npx vitest run tests/index.test.ts  # Run a single test file
 
 ## Architecture
 
-Flat `src/` directory, one module per file, no subdirectories:
+Flat `src/` directory, one module per file, no subdirectories. Modules are decomposed to respect the 100-line/5-line Sandi Metz limits, so related functionality is split across multiple files with a shared prefix (e.g., `runner-*.ts`, `status-*.ts`, `watcher-*.ts`, `server-*.ts`, `git-*.ts`).
 
-- **`index.ts`** — CLI entry point, `serve` command, graceful shutdown (SIGTERM/SIGINT)
-- **`types.ts`** — Discriminated unions: `ServiceStatus` (idle/busy/done/blocked), `PhaseResult` (success/failure/blocked), `DispatchFile`
-- **`watcher.ts`** — Watches dispatch directory via chokidar; sequential queue with busy flag (one job at a time)
-- **`runner.ts`** — Executes phases via `@anthropic-ai/claude-agent-sdk` `query()`, blocks `AskUserQuestion` via PreToolUse hook
-- **`parser.ts`** — Parses dispatch files (YAML frontmatter via `gray-matter` + markdown body)
-- **`status.ts`** — Atomic write-via-rename to `service.json`; defines the `Filesystem` interface used for DI
-- **`log.ts`** — Structured logger writing timestamped entries to `service.log`
-- **`filesystem.ts`** — `RealFilesystem` production implementation of the `Filesystem` interface
+### Core module groups
 
-The `Filesystem` interface (defined in `status.ts`) is the central DI seam — all file I/O goes through it. Tests use `FakeFilesystem` implementations.
+- **CLI**: `index.ts` (entry point), `cli.ts` (arg parsing), `version.ts`
+- **Server lifecycle**: `server.ts` (top-level `serve()`), `server-deps.ts` (DI wiring), `server-paths.ts` (path resolution), `server-startup.ts`, `shutdown.ts` (graceful SIGTERM/SIGINT)
+- **Types**: `types.ts` (discriminated unions: `ServiceStatus`, `PhaseResult`, `DispatchFile`), `type-guards.ts`, `validation.ts`
+- **Status**: `status.ts` (`StatusManager` class + `Filesystem` interface), `status-reader.ts`, `status-writer.ts` (atomic write-via-rename), `status-setters.ts`, `status-inputs.ts`, `status-check.ts`
+- **Runner (SDK execution)**: `runner.ts` (`PhaseRunner` class), `runner-query.ts`, `runner-messages.ts`, `runner-results.ts`, `runner-verification.ts` (post-phase `/phase-status` check), `plugin-resolver.ts`
+- **Watcher**: `watcher.ts` (`DispatchWatcher` with sequential queue + busy flag), `watcher-setup.ts`, `watcher-helpers.ts`, `watcher-context.ts`
+- **Git integration**: `git.ts` (`GitOperations` class), `git-pre-phase.ts` (branch creation from main), `git-post-phase.ts` (commit + push + PR on green phases), `command-executor.ts`, `which.ts`
+- **Infrastructure**: `filesystem.ts` (`RealFilesystem`), `log.ts` (structured logger → `pharaoh.log`), `parser.ts` (YAML frontmatter via `gray-matter`)
+
+### Key abstractions
+
+- **`Filesystem` interface** (defined in `status.ts`) — central DI seam for all file I/O. Tests use `FakeFilesystem`.
+- **`CommandExecutor` interface** (defined in `git.ts`) — DI seam for shell commands (git, gh). Tests use fakes.
+- **`Logger`** — all production logging; no `console.log` allowed.
 
 ### State machine
 
-`service.json` transitions: `idle → busy → (done|blocked) → idle`
+`pharaoh.json` transitions: `idle → busy → (done|blocked) → idle`
 
 ### Dispatch flow
 
-1. Markdown file appears in `.ushabti/dispatch/`
+1. Markdown file appears in `.pharaoh/dispatch/`
 2. Watcher detects, reads, parses frontmatter + body
 3. Dispatch file is deleted
-4. `service.json` set to `busy`
-5. `runner.ts` invokes SDK `query()` with `/ir-kat` prompt
-6. On completion: `done` or `blocked`, then back to `idle`
+4. `pharaoh.json` set to `busy`
+5. Git pre-phase: verify clean main branch, pull, create feature branch `pharaoh/{phase-slug}`
+6. `runner.ts` invokes SDK `query()` with `/ir-kat` prompt
+7. Post-query: lightweight `/phase-status latest` verification to catch incomplete agent loops
+8. Git post-phase (green only): stage all, commit, push, open PR via `gh`
+9. `pharaoh.json` set to `done` or `blocked`, then back to `idle`
 
 ## Laws and Style
 
