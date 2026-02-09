@@ -1,5 +1,6 @@
-.ushabti/service.json
-.ushabti/service.log
+.pharoah
+
+fixtures/hello-world-test/.pharaoh
 
 node_modules
 .dist
