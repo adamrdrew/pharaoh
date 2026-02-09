@@ -14,6 +14,7 @@ A filesystem-based job runner built on the Claude Agent SDK. Pharaoh watches a d
 - [Dispatch File Format](#dispatch-file-format)
 - [Status File Schema](#status-file-schema)
 - [Service Log](#service-log)
+- [Git Integration](#git-integration)
 - [Architecture](#architecture)
 
 ## How to Run
@@ -21,17 +22,17 @@ A filesystem-based job runner built on the Claude Agent SDK. Pharaoh watches a d
 ### Prerequisites
 
 - Node.js 20.x or later
-- Ushabti plugin installed locally
+- Ushabti plugin as local npm dependency (included via `npm install`)
 
 ### Starting the Server
 
 ```bash
 npm install
 npm run build
-pharaoh serve --plugin-path /path/to/ushabti
+pharaoh serve [--model <model>]
 ```
 
-The `--plugin-path` argument is required and specifies the location of the Ushabti plugin. An optional `--model` argument can specify the model to use (defaults to `claude-opus-4-20250514`).
+The `--model` argument is optional and specifies the model to use (defaults to `claude-opus-4-20250514`). The Ushabti plugin is resolved automatically from `node_modules` via npm's local file dependency mechanism.
 
 ### Running Tests
 
@@ -208,6 +209,37 @@ idle → busy → done → idle
 - `WARN`: Recoverable errors (file disappeared, transient failures)
 - `ERROR`: Unrecoverable errors (parse failures, SDK errors)
 
+## Git Integration
+
+Pharaoh automates git workflows around phase execution when running in a git repository.
+
+### Pre-Phase Operations
+
+Before executing a phase, Pharaoh:
+
+1. Verifies the current directory is a git repository
+2. Checks that the current branch is `main` or `master`
+3. Ensures the working tree is clean (no uncommitted changes)
+4. Pulls latest changes from the remote
+5. Creates a feature branch named `pharaoh/{phase-slug}` (e.g., `pharaoh/my-phase-name`)
+
+If any check fails, the operation is logged as a warning but does not block phase execution.
+
+### Post-Phase Operations (Green Phases Only)
+
+After a phase completes successfully (`done` status), Pharaoh:
+
+1. Stages all changes (`git add -A`)
+2. Commits with message: `Phase {phase-name} complete\n\nCo-Authored-By: Pharaoh <noreply@pharaoh>`
+3. Pushes the branch to remote (`git push -u origin pharaoh/{phase-slug}`)
+4. Opens a pull request via `gh` CLI (if installed and authenticated)
+
+If `gh` CLI is not available, steps 1-3 still complete and a message is logged with instructions to manually create the PR.
+
+### Non-Git Environments
+
+When Pharaoh runs in a directory that is not a git repository, all git operations are silently skipped. This allows Pharaoh to work in any environment without requiring git configuration.
+
 ## Architecture
 
 ### Modules
@@ -241,20 +273,22 @@ All side effects (filesystem, SDK calls) are abstracted behind interfaces and in
 
 Pharaoh invokes the Claude Agent SDK with:
 
-- **Plugin**: Ushabti plugin from local path
-- **Model**: Configurable (defaults to `opus`)
+- **Plugin**: Ushabti plugin resolved from `node_modules` via npm dependency
+- **Model**: Configurable via `--model` flag (defaults to `claude-opus-4-20250514`)
 - **Permissions**: Bypass mode with sandbox enabled
-- **Max turns**: 200
+- **Max turns**: 200 for main phase execution, 5 for status verification
 - **Hooks**: `PreToolUse` blocks `AskUserQuestion` with message "Proceed with your best judgement"
+
+### Phase Status Verification
+
+After the main SDK query completes, Pharaoh performs a lightweight verification query using `/phase-status latest` to ensure the ir-kat loop reached a terminal state. If the phase status is `building`, `planned`, or any incomplete state, the result is reported as blocked even if the SDK query succeeded. This prevents false positives when the agent loop exits early.
 
 ## Future Work
 
-Phase 1 (this phase) does NOT include:
+Deferred features:
 
-- **Git integration**: Branching, committing, and PR creation are deferred
 - **Progress extraction**: Current agent and step tracking from SDK message stream
 - **Human feedback**: Filesystem-based mechanism for `AskUserQuestion`
 - **Retry logic**: Failed phases stay blocked; retries are manual
 - **Advanced queueing**: Prioritization, cancellation, or concurrent execution
-
-These features are intentionally deferred to keep this phase focused on proving the core loop works.
+- **Git configuration**: Branch naming patterns, PR templates, and commit message customization

@@ -9,7 +9,6 @@ export interface ServerPaths {
     readonly logPath: string;
 }
 export interface ServerConfig {
-    readonly pluginPath: string;
     readonly model?: string;
 }
 export declare function initializeDependencies(fs: Filesystem, paths: ServerPaths, config: ServerConfig): Promise<{

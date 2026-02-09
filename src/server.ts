@@ -15,12 +15,11 @@ export type { ServerConfig } from './server-deps.js';
 export async function serve(config: ServerConfig): Promise<void> {
   const paths = buildPaths(process.cwd());
   const fs = new RealFilesystem();
-  await prepareServer(fs, paths, config);
+  await prepareServer(fs, paths);
   await launchServer(fs, paths, config);
 }
 
-async function prepareServer(fs: Filesystem, paths: ServerPaths, config: ServerConfig): Promise<void> {
-  await validatePluginPath(fs, config.pluginPath);
+async function prepareServer(fs: Filesystem, paths: ServerPaths): Promise<void> {
   await ensureDirectories(fs, paths);
 }
 
@@ -28,14 +27,6 @@ async function launchServer(fs: Filesystem, paths: ServerPaths, config: ServerCo
   const dependencies = await initializeDependencies(fs, paths, config);
   registerShutdownHandlers(dependencies);
   await startServer(dependencies, paths);
-}
-
-async function validatePluginPath(fs: Filesystem, pluginPath: string): Promise<void> {
-  const exists = await fs.exists(pluginPath);
-  if (!exists) {
-    console.error(`Error: Plugin path does not exist: ${pluginPath}`);
-    process.exit(1);
-  }
 }
 
 async function ensureDirectories(fs: Filesystem, paths: ServerPaths): Promise<void> {

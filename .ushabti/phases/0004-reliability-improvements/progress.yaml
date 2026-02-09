@@ -1,0 +1,156 @@
+phase:
+  id: "0004"
+  slug: reliability-improvements
+  title: "Reliability Improvements: Logging, Dependencies, Status Verification, and Git"
+  status: complete
+
+steps:
+  - id: S001
+    title: Fix debug log terminology
+    implemented: true
+    reviewed: true
+    notes: "Renamed turnCounter to messageCounter throughout runner.ts; changed log field from 'turn' to 'message' in runner-messages.ts"
+    touched:
+      - /Users/adam/Development/pharoh/src/runner.ts
+      - /Users/adam/Development/pharoh/src/runner-messages.ts
+
+  - id: S002
+    title: Add package.json to Ushabti
+    implemented: true
+    reviewed: true
+    notes: "package.json already exists at /Users/adam/Development/ushabti/ with correct name and version"
+    touched:
+      - /Users/adam/Development/ushabti/package.json
+
+  - id: S003
+    title: Add Ushabti as local dependency
+    implemented: true
+    reviewed: true
+    notes: "Added ushabti file dependency to package.json and ran npm install; symlink created in node_modules"
+    touched:
+      - /Users/adam/Development/pharoh/package.json
+
+  - id: S004
+    title: Resolve plugin path at runtime
+    implemented: true
+    reviewed: true
+    notes: "Created plugin-resolver.ts module with resolvePluginPath() using require.resolve"
+    touched:
+      - /Users/adam/Development/pharoh/src/plugin-resolver.ts
+
+  - id: S005
+    title: Remove pluginPath from RunnerConfig
+    implemented: true
+    reviewed: true
+    notes: "Removed pluginPath from RunnerConfig; PhaseRunner now resolves plugin path internally via resolvePluginPath(); updated runner-query.ts to accept pluginPath as parameter; removed from ServerConfig"
+    touched:
+      - /Users/adam/Development/pharoh/src/runner.ts
+      - /Users/adam/Development/pharoh/src/runner-query.ts
+      - /Users/adam/Development/pharoh/src/server-deps.ts
+      - /Users/adam/Development/pharoh/src/server.ts
+      - /Users/adam/Development/pharoh/src/index.ts
+
+  - id: S006
+    title: Remove --plugin-path CLI flag
+    implemented: true
+    reviewed: true
+    notes: "Removed pluginPath from ParsedArgs interface; removed extractFlag call for --plugin-path in parseArgs(); updated usage string in index.ts"
+    touched:
+      - /Users/adam/Development/pharoh/src/cli.ts
+      - /Users/adam/Development/pharoh/src/index.ts
+
+  - id: S007
+    title: Implement post-run status check query
+    implemented: true
+    reviewed: true
+    notes: "Created status-check.ts with checkPhaseStatus() function; uses SDK query with sonnet model and maxTurns=5; returns Result type with status string or error"
+    touched:
+      - /Users/adam/Development/pharoh/src/status-check.ts
+
+  - id: S008
+    title: Parse and interpret phase status
+    implemented: true
+    reviewed: true
+    notes: "Added verifyPhaseCompletion method to PhaseRunner; checks if status is complete/reviewing/done; returns blocked result if status is building/planned; logs both SDK outcome and phase status"
+    touched:
+      - /Users/adam/Development/pharoh/src/runner.ts
+
+  - id: S009
+    title: Fix phaseStarted timestamp bug
+    implemented: true
+    reviewed: true
+    notes: "Captured phaseStarted timestamp at start of runPhase(); passed through to initializePhase() and setBusy(); timestamp now accurate for duration calculations"
+    touched:
+      - /Users/adam/Development/pharoh/src/runner.ts
+
+  - id: S010
+    title: Create git operations module
+    implemented: true
+    reviewed: true
+    notes: "Created git.ts with GitOperations class; CommandExecutor interface for dependency injection; all methods return GitResult types; includes isGitRepo, isClean, getCurrentBranch, pull, createBranch, stageAll, commit, push, openPR"
+    touched:
+      - /Users/adam/Development/pharoh/src/git.ts
+
+  - id: S011
+    title: Integrate git pre-phase operations
+    implemented: true
+    reviewed: true
+    notes: "Created command-executor.ts, which.ts, and git-pre-phase.ts; integrated prepareGitEnvironment into watcher; verifies main branch, clean state, pulls, creates pharaoh/{phase-slug} branch; failures logged as warnings but don't block phase"
+    touched:
+      - /Users/adam/Development/pharoh/src/command-executor.ts
+      - /Users/adam/Development/pharoh/src/which.ts
+      - /Users/adam/Development/pharoh/src/git-pre-phase.ts
+      - /Users/adam/Development/pharoh/src/watcher.ts
+      - /Users/adam/Development/pharoh/src/server-deps.ts
+
+  - id: S012
+    title: Integrate git post-phase operations
+    implemented: true
+    reviewed: true
+    notes: "Created git-post-phase.ts with finalizeGreenPhase(); stages all changes, commits with descriptive message, pushes branch, opens PR via gh CLI if available; integrated into watcher after green phases; failures logged but don't block result reporting"
+    touched:
+      - /Users/adam/Development/pharoh/src/git-post-phase.ts
+      - /Users/adam/Development/pharoh/src/watcher.ts
+
+  - id: S013
+    title: Update documentation
+    implemented: true
+    reviewed: true
+    notes: "Updated docs to remove --plugin-path references; documented automatic Ushabti resolution via npm; added Git Integration section describing pre/post operations, branch naming, PR creation; updated SDK Configuration section; documented phase status verification"
+    touched:
+      - /Users/adam/Development/pharoh/.ushabti/docs/index.md
+
+  - id: S014
+    title: Split runner.ts into smaller modules
+    implemented: true
+    reviewed: true
+    notes: "Extracted verifyPhaseCompletion, logVerificationOutcome, interpretPhaseStatus, checkValidStatus, buildBlockedResult to new runner-verification.ts module; runner.ts now 99 lines"
+    touched:
+      - /Users/adam/Development/pharoh/src/runner.ts
+      - /Users/adam/Development/pharoh/src/runner-verification.ts
+
+  - id: S015
+    title: Refactor DispatchWatcher constructor to use options object
+    implemented: true
+    reviewed: true
+    notes: "Created DispatchWatcherOptions interface; reduced constructor from 8 to 6 parameters; updated instantiation in server-deps.ts"
+    touched:
+      - /Users/adam/Development/pharoh/src/watcher.ts
+      - /Users/adam/Development/pharoh/src/server-deps.ts
+
+  - id: S016
+    title: Further reduce DispatchWatcher constructor parameters
+    implemented: true
+    reviewed: true
+    notes: "Created DispatchWatcherDeps interface bundling fs, logger, status, runner, git; reduced constructor to 2 parameters (deps, options); updated instantiation in server-deps.ts; condensed blank lines; watcher.ts now 91 lines"
+    touched:
+      - /Users/adam/Development/pharoh/src/watcher.ts
+      - /Users/adam/Development/pharoh/src/server-deps.ts
+
+  - id: S017
+    title: Simplify updateState method
+    implemented: true
+    reviewed: true
+    notes: "Extracted updateResultMetrics helper function; reduced updateState from 6 to 4 body lines (actually 3); runner.ts now 99 lines total"
+    touched:
+      - /Users/adam/Development/pharoh/src/runner.ts

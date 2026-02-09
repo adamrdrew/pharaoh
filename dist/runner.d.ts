@@ -6,7 +6,6 @@ import type { StatusManager } from './status.js';
  */
 export interface RunnerConfig {
     readonly cwd: string;
-    readonly pluginPath: string;
     readonly model: string;
 }
 /**
@@ -16,12 +15,14 @@ export declare class PhaseRunner {
     private readonly logger;
     private readonly status;
     private readonly config;
+    private readonly pluginPath;
     constructor(logger: Logger, status: StatusManager, config: RunnerConfig);
     runPhase(pid: number, started: string, phasePrompt: string, phaseName?: string): Promise<PhaseResult>;
     private initializePhase;
     private processQueryMessages;
     private processMessage;
     private updateState;
+    private updateResultMetrics;
     private handleMessage;
     private handleNonResultMessage;
 }

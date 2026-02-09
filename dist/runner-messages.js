@@ -10,10 +10,10 @@ export async function handleResultMessage(message, logger, phaseName, startTime)
     const errors = message.errors.join('; ');
     return buildFailureResult(logger, phaseName, message.subtype, errors, turns, costUsd, durationMs);
 }
-export async function handleAssistantMessage(logger, phaseName, turnCounter) {
+export async function handleAssistantMessage(logger, phaseName, messageCounter) {
     await logger.debug('Assistant message received', {
         phase: phaseName,
-        turn: turnCounter,
+        message: messageCounter,
     });
 }
 export async function handleSystemMessage(logger, phaseName, status) {

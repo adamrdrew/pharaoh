@@ -1,40 +1,29 @@
 // Dispatch directory watcher
 import { checkFileExists, parseAndValidate, reportPhaseComplete } from './watcher-helpers.js';
 import { createWatcher } from './watcher-setup.js';
-/**
- * Watches dispatch directory for new markdown files
- */
+import { prepareGitEnvironment } from './git-pre-phase.js';
+import { finalizeGreenPhase } from './git-post-phase.js';
 export class DispatchWatcher {
-    fs;
-    logger;
-    status;
-    runner;
-    dispatchPath;
-    pid;
-    started;
+    deps;
+    options;
     watcher = null;
     busy = false;
     queue = [];
-    constructor(fs, logger, status, runner, dispatchPath, pid, started) {
-        this.fs = fs;
-        this.logger = logger;
-        this.status = status;
-        this.runner = runner;
-        this.dispatchPath = dispatchPath;
-        this.pid = pid;
-        this.started = started;
+    constructor(deps, options) {
+        this.deps = deps;
+        this.options = options;
     }
     async start() {
-        this.watcher = await createWatcher(this.dispatchPath, this.logger, (path) => {
+        this.watcher = await createWatcher(this.options.dispatchPath, this.deps.logger, (path) => {
             void this.handleDispatchFile(path);
         });
-        await this.logger.info('Watcher started', { path: this.dispatchPath });
+        await this.deps.logger.info('Watcher started', { path: this.options.dispatchPath });
     }
     async stop() {
         if (this.watcher !== null) {
             await this.watcher.close();
             this.watcher = null;
-            await this.logger.info('Watcher stopped');
+            await this.deps.logger.info('Watcher stopped');
         }
     }
     async handleDispatchFile(path) {
@@ -45,7 +34,7 @@ export class DispatchWatcher {
     }
     async enqueueFile(path) {
         this.queue.push(path);
-        await this.logger.info('Dispatch file queued', { path });
+        await this.deps.logger.info('Dispatch file queued', { path });
     }
     async processQueue() {
         while (this.queue.length > 0) {
@@ -59,7 +48,7 @@ export class DispatchWatcher {
     }
     async processDispatchFile(path) {
         this.busy = true;
-        await this.logger.info('Processing dispatch file', { path });
+        await this.deps.logger.info('Processing dispatch file', { path });
         await this.executeDispatchFile(path);
         this.busy = false;
     }
@@ -77,11 +66,14 @@ export class DispatchWatcher {
         return parseAndValidate(ctx, path);
     }
     async runAndReportPhase(ctx, parsed) {
-        const result = await this.runner.runPhase(this.pid, this.started, parsed.body, parsed.phase);
+        await prepareGitEnvironment(this.deps.git, this.deps.logger, parsed.phase);
+        const result = await this.deps.runner.runPhase(this.options.pid, this.options.started, parsed.body, parsed.phase);
+        if (result.ok)
+            await finalizeGreenPhase(this.deps.git, this.deps.logger, parsed.phase);
         await reportPhaseComplete(ctx, parsed.phase, result);
     }
     buildContext() {
-        return { fs: this.fs, logger: this.logger, status: this.status, pid: this.pid, started: this.started };
+        return { ...this.deps, pid: this.options.pid, started: this.options.started };
     }
 }
 //# sourceMappingURL=watcher.js.map

@@ -5,9 +5,8 @@
 export function parseArgs(argv) {
     const args = argv.slice(2);
     const command = args[0] ?? '';
-    const pluginPath = extractFlag(args, '--plugin-path');
     const model = extractFlag(args, '--model');
-    return { command, pluginPath, model };
+    return { command, model };
 }
 function extractFlag(args, flag) {
     const index = args.indexOf(flag);

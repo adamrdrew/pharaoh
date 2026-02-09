@@ -8,11 +8,11 @@ import { serve } from './server.js';
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv);
-  if (args.command !== 'serve' || !args.pluginPath) {
-    console.error('Usage: pharaoh serve --plugin-path <path> [--model <model>]');
+  if (args.command !== 'serve') {
+    console.error('Usage: pharaoh serve [--model <model>]');
     process.exit(1);
   }
-  await serve({ pluginPath: args.pluginPath, model: args.model });
+  await serve({ model: args.model });
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

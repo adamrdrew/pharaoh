@@ -1,20 +1,20 @@
 // SDK query configuration
 import { query } from '@anthropic-ai/claude-agent-sdk';
-export function createQuery(config, logger, phasePrompt, phaseName) {
+export function createQuery(config, pluginPath, logger, phasePrompt, phaseName) {
     const prompt = `Invoke /ir-kat with the following PHASE_PROMPT:\n\n${phasePrompt}`;
     return query({
         prompt,
-        options: buildQueryOptions(config, logger, phaseName),
+        options: buildQueryOptions(config, pluginPath, logger, phaseName),
     });
 }
-function buildQueryOptions(config, logger, phaseName) {
-    const baseOptions = createBaseOptions(config);
+function buildQueryOptions(config, pluginPath, logger, phaseName) {
+    const baseOptions = createBaseOptions(config, pluginPath);
     const securityOptions = createSecurityOptions();
     const hookOptions = createHookOptions(logger, phaseName);
     return { ...baseOptions, ...securityOptions, ...hookOptions };
 }
-function createBaseOptions(config) {
-    return { cwd: config.cwd, model: config.model, plugins: [{ type: 'local', path: config.pluginPath }], settingSources: ['project'], maxTurns: 200, persistSession: false };
+function createBaseOptions(config, pluginPath) {
+    return { cwd: config.cwd, model: config.model, plugins: [{ type: 'local', path: pluginPath }], settingSources: ['project'], maxTurns: 200, persistSession: false };
 }
 function createSecurityOptions() {
     return { permissionMode: 'bypassPermissions', allowDangerouslySkipPermissions: true, sandbox: { enabled: true, autoAllowBashIfSandboxed: true } };

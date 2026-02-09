@@ -23,11 +23,11 @@ export async function handleResultMessage(
 export async function handleAssistantMessage(
   logger: Logger,
   phaseName: string,
-  turnCounter: number
+  messageCounter: number
 ): Promise<void> {
   await logger.debug('Assistant message received', {
     phase: phaseName,
-    turn: turnCounter,
+    message: messageCounter,
   });
 }
 

@@ -2,7 +2,6 @@
 
 export interface ParsedArgs {
   readonly command: string;
-  readonly pluginPath?: string;
   readonly model?: string;
 }
 
@@ -12,9 +11,8 @@ export interface ParsedArgs {
 export function parseArgs(argv: readonly string[]): ParsedArgs {
   const args = argv.slice(2);
   const command = args[0] ?? '';
-  const pluginPath = extractFlag(args, '--plugin-path');
   const model = extractFlag(args, '--model');
-  return { command, pluginPath, model };
+  return { command, model };
 }
 
 function extractFlag(args: readonly string[], flag: string): string | undefined {

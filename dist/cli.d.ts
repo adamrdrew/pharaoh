@@ -1,6 +1,5 @@
 export interface ParsedArgs {
     readonly command: string;
-    readonly pluginPath?: string;
     readonly model?: string;
 }
 /**

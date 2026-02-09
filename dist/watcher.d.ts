@@ -2,21 +2,26 @@ import type { Filesystem } from './status.js';
 import type { Logger } from './log.js';
 import type { StatusManager } from './status.js';
 import type { PhaseRunner } from './runner.js';
-/**
- * Watches dispatch directory for new markdown files
- */
+import type { GitOperations } from './git.js';
+export interface DispatchWatcherOptions {
+    readonly dispatchPath: string;
+    readonly pid: number;
+    readonly started: string;
+}
+export interface DispatchWatcherDeps {
+    readonly fs: Filesystem;
+    readonly logger: Logger;
+    readonly status: StatusManager;
+    readonly runner: PhaseRunner;
+    readonly git: GitOperations;
+}
 export declare class DispatchWatcher {
-    private readonly fs;
-    private readonly logger;
-    private readonly status;
-    private readonly runner;
-    private readonly dispatchPath;
-    private readonly pid;
-    private readonly started;
+    private readonly deps;
+    private readonly options;
     private watcher;
     private busy;
     private queue;
-    constructor(fs: Filesystem, logger: Logger, status: StatusManager, runner: PhaseRunner, dispatchPath: string, pid: number, started: string);
+    constructor(deps: DispatchWatcherDeps, options: DispatchWatcherOptions);
     start(): Promise<void>;
     stop(): Promise<void>;
     private handleDispatchFile;

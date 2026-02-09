@@ -6,6 +6,7 @@ import type { RunnerConfig } from './runner.js';
 
 export function createQuery(
   config: RunnerConfig,
+  pluginPath: string,
   logger: Logger,
   phasePrompt: string,
   phaseName: string
@@ -13,19 +14,19 @@ export function createQuery(
   const prompt = `Invoke /ir-kat with the following PHASE_PROMPT:\n\n${phasePrompt}`;
   return query({
     prompt,
-    options: buildQueryOptions(config, logger, phaseName) as Parameters<typeof query>[0]['options'],
+    options: buildQueryOptions(config, pluginPath, logger, phaseName) as Parameters<typeof query>[0]['options'],
   });
 }
 
-function buildQueryOptions(config: RunnerConfig, logger: Logger, phaseName: string): Record<string, unknown> {
-  const baseOptions = createBaseOptions(config);
+function buildQueryOptions(config: RunnerConfig, pluginPath: string, logger: Logger, phaseName: string): Record<string, unknown> {
+  const baseOptions = createBaseOptions(config, pluginPath);
   const securityOptions = createSecurityOptions();
   const hookOptions = createHookOptions(logger, phaseName);
   return { ...baseOptions, ...securityOptions, ...hookOptions };
 }
 
-function createBaseOptions(config: RunnerConfig): Record<string, unknown> {
-  return { cwd: config.cwd, model: config.model, plugins: [{ type: 'local', path: config.pluginPath }], settingSources: ['project'], maxTurns: 200, persistSession: false };
+function createBaseOptions(config: RunnerConfig, pluginPath: string): Record<string, unknown> {
+  return { cwd: config.cwd, model: config.model, plugins: [{ type: 'local', path: pluginPath }], settingSources: ['project'], maxTurns: 200, persistSession: false };
 }
 
 function createSecurityOptions(): Record<string, unknown> {
