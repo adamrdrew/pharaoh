@@ -15,6 +15,14 @@ export class RealFilesystem implements Filesystem {
     await fs.writeFile(path, content, 'utf-8');
   }
 
+  async appendFile(path: string, content: string): Promise<void> {
+    await fs.appendFile(path, content, 'utf-8');
+  }
+
+  async mkdir(path: string, options?: { recursive: boolean }): Promise<void> {
+    await fs.mkdir(path, options);
+  }
+
   async rename(oldPath: string, newPath: string): Promise<void> {
     await fs.rename(oldPath, newPath);
   }

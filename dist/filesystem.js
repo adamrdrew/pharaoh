@@ -10,6 +10,12 @@ export class RealFilesystem {
     async writeFile(path, content) {
         await fs.writeFile(path, content, 'utf-8');
     }
+    async appendFile(path, content) {
+        await fs.appendFile(path, content, 'utf-8');
+    }
+    async mkdir(path, options) {
+        await fs.mkdir(path, options);
+    }
     async rename(oldPath, newPath) {
         await fs.rename(oldPath, newPath);
     }

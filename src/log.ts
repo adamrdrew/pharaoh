@@ -1,4 +1,4 @@
-// Structured logger for service.log
+// Structured logger for pharaoh.log
 
 import type { Filesystem } from './status.js';
 
@@ -13,7 +13,7 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 export type LogContext = Record<string, unknown>;
 
 /**
- * Structured logger that writes timestamped entries to service.log
+ * Structured logger that writes timestamped entries to pharaoh.log
  */
 export class Logger {
   constructor(
@@ -21,18 +21,25 @@ export class Logger {
     private readonly logPath: string
   ) {}
 
-  /**
-   * Format timestamp for log entry
-   */
   private formatTimestamp(): string {
     const now = new Date();
+    const datePart = this.formatDate(now);
+    const timePart = this.formatTime(now);
+    return `${datePart} ${timePart}`;
+  }
+
+  private formatDate(now: Date): string {
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private formatTime(now: Date): string {
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    return `${hours}:${minutes}:${seconds}`;
   }
 
   /**
@@ -45,26 +52,15 @@ export class Logger {
     return ` ${JSON.stringify(context)}`;
   }
 
-  /**
-   * Write log entry to file
-   */
-  private async write(
-    level: LogLevel,
-    message: string,
-    context?: LogContext
-  ): Promise<void> {
-    const timestamp = this.formatTimestamp();
-    const levelUpper = level.toUpperCase();
-    const contextStr = this.formatContext(context);
-    const entry = `[${timestamp}] [${levelUpper}] ${message}${contextStr}\n`;
+  private async write(level: LogLevel, message: string, context?: LogContext): Promise<void> {
+    const entry = this.buildLogEntry(level, message, context);
+    await this.fs.appendFile(this.logPath, entry);
+  }
 
-    const exists = await this.fs.exists(this.logPath);
-    if (exists) {
-      const current = await this.fs.readFile(this.logPath);
-      await this.fs.writeFile(this.logPath, current + entry);
-    } else {
-      await this.fs.writeFile(this.logPath, entry);
-    }
+  private buildLogEntry(level: LogLevel, message: string, context?: LogContext): string {
+    const timestamp = this.formatTimestamp();
+    const contextStr = this.formatContext(context);
+    return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}\n`;
   }
 
   /**

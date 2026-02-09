@@ -1,6 +1,6 @@
-// Structured logger for service.log
+// Structured logger for pharaoh.log
 /**
- * Structured logger that writes timestamped entries to service.log
+ * Structured logger that writes timestamped entries to pharaoh.log
  */
 export class Logger {
     fs;
@@ -9,18 +9,23 @@ export class Logger {
         this.fs = fs;
         this.logPath = logPath;
     }
-    /**
-     * Format timestamp for log entry
-     */
     formatTimestamp() {
         const now = new Date();
+        const datePart = this.formatDate(now);
+        const timePart = this.formatTime(now);
+        return `${datePart} ${timePart}`;
+    }
+    formatDate(now) {
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    formatTime(now) {
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const seconds = String(now.getSeconds()).padStart(2, '0');
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        return `${hours}:${minutes}:${seconds}`;
     }
     /**
      * Format context object as JSON string
@@ -31,22 +36,14 @@ export class Logger {
         }
         return ` ${JSON.stringify(context)}`;
     }
-    /**
-     * Write log entry to file
-     */
     async write(level, message, context) {
+        const entry = this.buildLogEntry(level, message, context);
+        await this.fs.appendFile(this.logPath, entry);
+    }
+    buildLogEntry(level, message, context) {
         const timestamp = this.formatTimestamp();
-        const levelUpper = level.toUpperCase();
         const contextStr = this.formatContext(context);
-        const entry = `[${timestamp}] [${levelUpper}] ${message}${contextStr}\n`;
-        const exists = await this.fs.exists(this.logPath);
-        if (exists) {
-            const current = await this.fs.readFile(this.logPath);
-            await this.fs.writeFile(this.logPath, current + entry);
-        }
-        else {
-            await this.fs.writeFile(this.logPath, entry);
-        }
+        return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}\n`;
     }
     /**
      * Log debug message (verbose internal state)

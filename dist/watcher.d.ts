@@ -17,25 +17,16 @@ export declare class DispatchWatcher {
     private busy;
     private queue;
     constructor(fs: Filesystem, logger: Logger, status: StatusManager, runner: PhaseRunner, dispatchPath: string, pid: number, started: string);
-    /**
-     * Start watching dispatch directory
-     */
     start(): Promise<void>;
-    /**
-     * Stop watching and clean up resources
-     */
     stop(): Promise<void>;
-    /**
-     * Handle a new dispatch file
-     */
     private handleDispatchFile;
-    /**
-     * Process queued dispatch files
-     */
+    private enqueueFile;
     private processQueue;
-    /**
-     * Process a single dispatch file
-     */
+    private processNextInQueue;
     private processDispatchFile;
+    private executeDispatchFile;
+    private validateDispatchFile;
+    private runAndReportPhase;
+    private buildContext;
 }
 //# sourceMappingURL=watcher.d.ts.map

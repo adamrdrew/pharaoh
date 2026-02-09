@@ -21,15 +21,17 @@ A filesystem-based job runner built on the Claude Agent SDK. Pharaoh watches a d
 ### Prerequisites
 
 - Node.js 20.x or later
-- Ushabti plugin installed at `/Users/adam/Development/ushabti/`
+- Ushabti plugin installed locally
 
 ### Starting the Server
 
 ```bash
 npm install
 npm run build
-npm run serve
+pharaoh serve --plugin-path /path/to/ushabti
 ```
+
+The `--plugin-path` argument is required and specifies the location of the Ushabti plugin. An optional `--model` argument can specify the model to use (defaults to `claude-opus-4-20250514`).
 
 ### Running Tests
 
@@ -38,23 +40,17 @@ npm test              # Run tests once
 npm run test:watch    # Run tests in watch mode
 ```
 
-Or use the compiled binary:
-
-```bash
-./dist/index.js serve
-```
-
 The server will:
-1. Create `service.json` with status `idle`
-2. Start watching `.ushabti/dispatch/` for `.md` files
-3. Log startup events to `service.log`
+1. Create `pharaoh.json` with status `idle`
+2. Start watching `.pharaoh/dispatch/` for `.md` files
+3. Log startup events to `pharaoh.log`
 
 ### Dispatching a Phase
 
-Create a markdown file in `.ushabti/dispatch/` with YAML frontmatter:
+Create a markdown file in `.pharaoh/dispatch/` with YAML frontmatter:
 
 ```bash
-cat > .ushabti/dispatch/my-phase.md << 'EOF'
+cat > .pharaoh/dispatch/my-phase.md << 'EOF'
 ---
 phase: my-phase-name
 model: opus
@@ -68,9 +64,9 @@ The server will:
 1. Detect the file
 2. Parse frontmatter and body
 3. Delete the dispatch file
-4. Update `service.json` to `busy`
+4. Update `pharaoh.json` to `busy`
 5. Invoke `/ir-kat` via Claude Agent SDK
-6. Update `service.json` to `done` or `blocked`
+6. Update `pharaoh.json` to `done` or `blocked`
 7. Return to `idle`
 
 ### Stopping the Server
@@ -83,7 +79,7 @@ kill -TERM <pid>
 
 The server performs graceful shutdown:
 - Stops the watcher
-- Removes `service.json`
+- Removes `pharaoh.json`
 - Logs shutdown event
 
 ## Dispatch File Format
@@ -118,7 +114,7 @@ The body (everything after `---`) is the PHASE_PROMPT passed to `/ir-kat`.
 
 ## Status File Schema
 
-`service.json` reflects the current server state. The schema is a discriminated union based on `status`:
+`pharaoh.json` reflects the current server state. The schema is a discriminated union based on `status`:
 
 ### Idle
 
@@ -189,16 +185,16 @@ idle → busy → done → idle
        → blocked → idle
 ```
 
-## Service Log
+## Pharaoh Log
 
-`service.log` contains timestamped, human-readable log entries:
+`pharaoh.log` contains timestamped, human-readable log entries:
 
 ```
 [2026-02-09 15:00:00] [INFO] Pharaoh server starting {"pid":12345,"cwd":"/path/to/project"}
 [2026-02-09 15:00:00] [INFO] Pharaoh starting {"version":"0.1.0","cwd":"/path/to/project"}
-[2026-02-09 15:00:00] [INFO] Serving directory {"cwd":"/path/to/project","dispatchPath":"/path/to/project/.ushabti/dispatch"}
-[2026-02-09 15:00:00] [INFO] Watcher started {"path":"/path/to/project/.ushabti/dispatch"}
-[2026-02-09 15:00:00] [INFO] Pharaoh server ready {"dispatchPath":"/path/to/project/.ushabti/dispatch"}
+[2026-02-09 15:00:00] [INFO] Serving directory {"cwd":"/path/to/project","dispatchPath":"/path/to/project/.pharaoh/dispatch"}
+[2026-02-09 15:00:00] [INFO] Watcher started {"path":"/path/to/project/.pharaoh/dispatch"}
+[2026-02-09 15:00:00] [INFO] Pharaoh server ready {"dispatchPath":"/path/to/project/.pharaoh/dispatch"}
 [2026-02-09 15:01:00] [INFO] Processing dispatch file {"path":"..."}
 [2026-02-09 15:01:00] [INFO] Dispatch file parsed {"phase":"my-phase","model":"opus"}
 [2026-02-09 15:01:00] [INFO] Starting phase execution {"phase":"my-phase"}
@@ -220,8 +216,8 @@ Pharaoh uses a flat `src/` directory with single-responsibility modules:
 
 - `index.ts` — CLI entry point, server initialization, and version reading
 - `types.ts` — Discriminated union types for status and results
-- `status.ts` — Atomic reads/writes for `service.json`
-- `log.ts` — Structured logging to `service.log`
+- `status.ts` — Atomic reads/writes for `pharaoh.json`
+- `log.ts` — Structured logging to `pharaoh.log`
 - `parser.ts` — Dispatch file parsing (frontmatter + body)
 - `runner.ts` — SDK query execution via `ir-kat` skill
 - `watcher.ts` — Dispatch directory watcher with sequential queueing

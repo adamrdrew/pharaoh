@@ -1,7 +1,7 @@
 // Tests for index.ts version reading logic
 
 import { describe, test, expect } from 'vitest';
-import { readVersion } from '../src/index.js';
+import { readVersion } from '../src/version.js';
 import type { Filesystem } from '../src/status.js';
 
 /**
@@ -25,6 +25,15 @@ class FakeFilesystem implements Filesystem {
 
   async writeFile(path: string, content: string): Promise<void> {
     this.files.set(path, content);
+  }
+
+  async appendFile(path: string, content: string): Promise<void> {
+    const existing = this.files.get(path) ?? '';
+    this.files.set(path, existing + content);
+  }
+
+  async mkdir(_path: string, _options?: { recursive: boolean }): Promise<void> {
+    // No-op for testing
   }
 
   async rename(oldPath: string, newPath: string): Promise<void> {

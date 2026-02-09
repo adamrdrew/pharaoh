@@ -1,9 +1,11 @@
 // SDK query runner for executing phases via ir-kat skill
 
-import { query } from '@anthropic-ai/claude-agent-sdk';
 import type { PhaseResult } from './types.js';
 import type { Logger } from './log.js';
 import type { StatusManager } from './status.js';
+import { createQuery } from './runner-query.js';
+import { handleResultMessage, handleAssistantMessage, handleSystemMessage } from './runner-messages.js';
+import { buildNoResultError } from './runner-results.js';
 
 /**
  * Configuration for phase execution
@@ -24,9 +26,6 @@ export class PhaseRunner {
     private readonly config: RunnerConfig
   ) {}
 
-  /**
-   * Run a phase via the ir-kat skill
-   */
   async runPhase(
     pid: number,
     started: string,
@@ -35,138 +34,54 @@ export class PhaseRunner {
   ): Promise<PhaseResult> {
     const name = phaseName ?? 'unnamed-phase';
     const startTime = Date.now();
-    const phaseStarted = new Date().toISOString();
+    await this.initializePhase(pid, started, name);
+    const q = createQuery(this.config, this.logger, phasePrompt, name);
+    return this.processQueryMessages(q, name, startTime);
+  }
 
-    await this.logger.info('Starting phase execution', { phase: name });
-    await this.status.setBusy(pid, started, name, phaseStarted);
+  private async initializePhase(
+    pid: number,
+    started: string,
+    phaseName: string
+  ): Promise<void> {
+    await this.logger.info('Starting phase execution', { phase: phaseName });
+    await this.status.setBusy({ pid, started, phase: phaseName, phaseStarted: new Date().toISOString() });
+  }
 
-    const prompt = `Invoke /ir-kat with the following PHASE_PROMPT:\n\n${phasePrompt}`;
-
-    const q = query({
-      prompt,
-      options: {
-        cwd: this.config.cwd,
-        model: this.config.model,
-        plugins: [{ type: 'local', path: this.config.pluginPath }],
-        settingSources: ['project'],
-        permissionMode: 'bypassPermissions',
-        allowDangerouslySkipPermissions: true,
-        sandbox: {
-          enabled: true,
-          autoAllowBashIfSandboxed: true,
-        },
-        maxTurns: 200,
-        persistSession: false,
-        hooks: {
-          PreToolUse: [
-            {
-              hooks: [
-                async (input) => {
-                  if (
-                    input.hook_event_name === 'PreToolUse' &&
-                    input.tool_name === 'AskUserQuestion'
-                  ) {
-                    await this.logger.info('Blocked AskUserQuestion', {
-                      phase: name,
-                    });
-                    return {
-                      continue: true,
-                      decision: 'block',
-                      systemMessage: 'Proceed with your best judgement',
-                    };
-                  }
-                  return { continue: true };
-                },
-              ],
-            },
-          ],
-        },
-      },
-    });
-
-    let turns = 0;
-    let costUsd = 0;
-
+  private async processQueryMessages(q: ReturnType<typeof createQuery>, phaseName: string, startTime: number): Promise<PhaseResult> {
+    const state = { turns: 0, costUsd: 0, turnCounter: 0 };
     for await (const message of q) {
-      if (message.type === 'result') {
-        const durationMs = Date.now() - startTime;
-
-        if (message.subtype === 'success') {
-          turns = message.num_turns;
-          costUsd = message.total_cost_usd;
-
-          await this.logger.info('Phase completed successfully', {
-            phase: name,
-            turns,
-            costUsd,
-            durationMs,
-          });
-
-          return {
-            ok: true,
-            costUsd,
-            turns,
-            durationMs,
-          };
-        } else {
-          turns = message.num_turns;
-          costUsd = message.total_cost_usd;
-          const errors = message.errors.join('; ');
-
-          await this.logger.error('Phase failed', {
-            phase: name,
-            subtype: message.subtype,
-            errors,
-            turns,
-            costUsd,
-          });
-
-          if (message.subtype === 'error_max_turns') {
-            return {
-              ok: false,
-              reason: 'max_turns',
-              error: `Max turns reached: ${errors}`,
-              costUsd,
-              turns,
-              durationMs,
-            };
-          }
-
-          return {
-            ok: false,
-            reason: 'sdk_error',
-            error: errors,
-            costUsd,
-            turns,
-            durationMs,
-          };
-        }
-      }
-
-      if (message.type === 'assistant') {
-        await this.logger.debug('Assistant message received', {
-          phase: name,
-        });
-      }
-
-      if (message.type === 'system' && message.subtype === 'status') {
-        await this.logger.debug('SDK status', {
-          phase: name,
-          status: message.status,
-        });
-      }
+      const result = await this.processMessage(message, phaseName, startTime, state);
+      if (result) return result;
     }
+    return buildNoResultError(this.logger, phaseName, state.costUsd, state.turns, Date.now() - startTime);
+  }
 
-    const durationMs = Date.now() - startTime;
-    await this.logger.error('Phase ended without result', { phase: name });
+  private async processMessage(message: unknown, phaseName: string, startTime: number, state: { turns: number; costUsd: number; turnCounter: number }): Promise<PhaseResult | null> {
+    const result = await this.handleMessage(message, phaseName, startTime, state.turnCounter);
+    if (result) return result;
+    this.updateState(message, state);
+    return null;
+  }
 
-    return {
-      ok: false,
-      reason: 'sdk_error',
-      error: 'Query ended without result message',
-      costUsd,
-      turns,
-      durationMs,
-    };
+  private updateState(message: unknown, state: { turns: number; costUsd: number; turnCounter: number }): void {
+    const msg = message as { type: string; num_turns?: number; total_cost_usd?: number };
+    if (msg.type === 'assistant') state.turnCounter++;
+    if (msg.type === 'result' && msg.num_turns !== undefined && msg.total_cost_usd !== undefined) {
+      state.turns = msg.num_turns;
+      state.costUsd = msg.total_cost_usd;
+    }
+  }
+
+  private async handleMessage(message: unknown, phaseName: string, startTime: number, turnCounter: number): Promise<PhaseResult | null> {
+    const msg = message as { type: string; subtype?: string; status?: unknown };
+    if (msg.type === 'result') return handleResultMessage(msg as Parameters<typeof handleResultMessage>[0], this.logger, phaseName, startTime);
+    await this.handleNonResultMessage(msg, phaseName, turnCounter);
+    return null;
+  }
+
+  private async handleNonResultMessage(msg: { type: string; subtype?: string; status?: unknown }, phaseName: string, turnCounter: number): Promise<void> {
+    if (msg.type === 'assistant') await handleAssistantMessage(this.logger, phaseName, turnCounter + 1);
+    if (msg.type === 'system' && msg.subtype === 'status' && typeof msg.status === 'string') await handleSystemMessage(this.logger, phaseName, msg.status);
   }
 }

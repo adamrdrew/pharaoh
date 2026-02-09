@@ -8,24 +8,21 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
  */
 export type LogContext = Record<string, unknown>;
 /**
- * Structured logger that writes timestamped entries to service.log
+ * Structured logger that writes timestamped entries to pharaoh.log
  */
 export declare class Logger {
     private readonly fs;
     private readonly logPath;
     constructor(fs: Filesystem, logPath: string);
-    /**
-     * Format timestamp for log entry
-     */
     private formatTimestamp;
+    private formatDate;
+    private formatTime;
     /**
      * Format context object as JSON string
      */
     private formatContext;
-    /**
-     * Write log entry to file
-     */
     private write;
+    private buildLogEntry;
     /**
      * Log debug message (verbose internal state)
      */

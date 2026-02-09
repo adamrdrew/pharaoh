@@ -2,3 +2,4 @@
 .ushabti/service.log
 
 node_modules
+.dist

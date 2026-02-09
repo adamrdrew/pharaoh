@@ -17,9 +17,12 @@ export declare class PhaseRunner {
     private readonly status;
     private readonly config;
     constructor(logger: Logger, status: StatusManager, config: RunnerConfig);
-    /**
-     * Run a phase via the ir-kat skill
-     */
     runPhase(pid: number, started: string, phasePrompt: string, phaseName?: string): Promise<PhaseResult>;
+    private initializePhase;
+    private processQueryMessages;
+    private processMessage;
+    private updateState;
+    private handleMessage;
+    private handleNonResultMessage;
 }
 //# sourceMappingURL=runner.d.ts.map
