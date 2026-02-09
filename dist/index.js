@@ -11,7 +11,5 @@ async function main() {
     }
     await serve({ model: args.model });
 }
-if (import.meta.url === `file://${process.argv[1]}`) {
-    void main();
-}
+void main();
 //# sourceMappingURL=index.js.map
