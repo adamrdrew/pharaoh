@@ -562,3 +562,11 @@
 [2026-02-09 14:45:47] [DEBUG] Status check content extracted {"type":"assistant","length":107}
 [2026-02-09 14:45:48] [DEBUG] Status check raw output {"outputLength":107,"outputPreview":"PHASE_STATUS:\n  slug: 0003-add-farewell-function\n  status: complete\n  steps_implemented: 3\n  steps_total: 3","parsedStatus":"complete"}
 [2026-02-09 14:45:48] [INFO] Phase verification complete {"phase":"add-version","sdkSuccess":true,"phaseStatus":"complete"}
+[2026-02-09 14:45:48] [INFO] Staged all changes
+[2026-02-09 14:45:48] [INFO] Committed changes {"phase":"add-version"}
+[2026-02-09 14:45:48] [WARN] Failed to push branch {"error":"error: src refspec pharaoh/add-version does not match any\nerror: failed to push some refs to 'origin'\n"}
+[2026-02-09 14:45:48] [INFO] PR creation skipped {"reason":"no git remotes found\n"}
+[2026-02-09 14:45:48] [INFO] Phase done {"phase":"add-version"}
+[2026-02-09 14:48:44] [INFO] Shutting down gracefully
+[2026-02-09 14:48:44] [INFO] Watcher stopped
+[2026-02-09 14:48:44] [INFO] Shutdown complete
