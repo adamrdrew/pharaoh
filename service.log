@@ -1,0 +1,26 @@
+[2026-02-09 10:11:01] [INFO] Pharaoh server starting {"pid":33856,"cwd":"/Users/adam/Development/pharoh"}
+[2026-02-09 10:11:01] [INFO] Watcher started {"path":"/Users/adam/Development/pharoh/.ushabti/dispatch"}
+[2026-02-09 10:11:01] [INFO] Pharaoh server ready {"dispatchPath":"/Users/adam/Development/pharoh/.ushabti/dispatch"}
+[2026-02-09 10:11:14] [INFO] Processing dispatch file {"path":"/Users/adam/Development/pharoh/.ushabti/dispatch/test.md"}
+[2026-02-09 10:11:14] [INFO] Dispatch file parsed {"path":"/Users/adam/Development/pharoh/.ushabti/dispatch/test.md","phase":"test","model":"opus"}
+[2026-02-09 10:11:14] [INFO] Starting phase execution {"phase":"test"}
+[2026-02-09 10:11:18] [DEBUG] Assistant message received {"phase":"test"}
+[2026-02-09 10:11:19] [DEBUG] Assistant message received {"phase":"test"}
+[2026-02-09 10:11:23] [DEBUG] Assistant message received {"phase":"test"}
+[2026-02-09 10:11:26] [DEBUG] Assistant message received {"phase":"test"}
+[2026-02-09 10:11:28] [DEBUG] Assistant message received {"phase":"test"}
+[2026-02-09 10:11:29] [INFO] Shutting down gracefully
+[2026-02-09 10:11:29] [INFO] Watcher stopped
+[2026-02-09 10:11:29] [INFO] Shutdown complete
+[2026-02-09 10:23:24] [INFO] Pharaoh server starting {"pid":35618,"cwd":"/Users/adam/Development/pharoh"}
+[2026-02-09 10:23:24] [INFO] Watcher started {"path":"/Users/adam/Development/pharoh/.ushabti/dispatch"}
+[2026-02-09 10:23:24] [INFO] Pharaoh server ready {"dispatchPath":"/Users/adam/Development/pharoh/.ushabti/dispatch"}
+[2026-02-09 10:23:26] [INFO] Shutting down gracefully
+[2026-02-09 10:23:26] [INFO] Watcher stopped
+[2026-02-09 10:23:26] [INFO] Shutdown complete
+[2026-02-09 10:23:35] [INFO] Pharaoh server starting {"pid":35643,"cwd":"/Users/adam/Development/pharoh"}
+[2026-02-09 10:23:35] [INFO] Watcher started {"path":"/Users/adam/Development/pharoh/.ushabti/dispatch"}
+[2026-02-09 10:23:35] [INFO] Pharaoh server ready {"dispatchPath":"/Users/adam/Development/pharoh/.ushabti/dispatch"}
+[2026-02-09 10:23:38] [INFO] Shutting down gracefully
+[2026-02-09 10:23:38] [INFO] Watcher stopped
+[2026-02-09 10:23:38] [INFO] Shutdown complete

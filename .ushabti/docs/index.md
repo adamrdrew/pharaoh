@@ -1,15 +1,252 @@
 # Project Documentation
 
-> **Scaffold documentation** — This is minimal documentation created during project bootstrap. Run **Ushabti Surveyor** to generate comprehensive project documentation.
-
 ## Project Name
 
 Pharaoh
 
 ## Description
 
-A filesystem-based job runner built on the Claude Agent SDK.
+A filesystem-based job runner built on the Claude Agent SDK. Pharaoh watches a dispatch directory for markdown files containing phase prompts, executes them via the Claude Agent SDK's `ir-kat` skill (which runs the Ushabti Scribe → Builder → Overseer loop), and reports status through a JSON file on disk.
 
 ## Table of Contents
 
-<!-- Populated by Surveyor -->
+- [How to Run](#how-to-run)
+- [Dispatch File Format](#dispatch-file-format)
+- [Status File Schema](#status-file-schema)
+- [Service Log](#service-log)
+- [Architecture](#architecture)
+
+## How to Run
+
+### Prerequisites
+
+- Node.js 20.x or later
+- Ushabti plugin installed at `/Users/adam/Development/ushabti/`
+
+### Starting the Server
+
+```bash
+npm install
+npm run build
+npm run serve
+```
+
+Or use the compiled binary:
+
+```bash
+./dist/index.js serve
+```
+
+The server will:
+1. Create `service.json` with status `idle`
+2. Start watching `.ushabti/dispatch/` for `.md` files
+3. Log startup events to `service.log`
+
+### Dispatching a Phase
+
+Create a markdown file in `.ushabti/dispatch/` with YAML frontmatter:
+
+```bash
+cat > .ushabti/dispatch/my-phase.md << 'EOF'
+---
+phase: my-phase-name
+model: opus
+---
+
+Your PHASE_PROMPT content here...
+EOF
+```
+
+The server will:
+1. Detect the file
+2. Parse frontmatter and body
+3. Delete the dispatch file
+4. Update `service.json` to `busy`
+5. Invoke `/ir-kat` via Claude Agent SDK
+6. Update `service.json` to `done` or `blocked`
+7. Return to `idle`
+
+### Stopping the Server
+
+Send SIGTERM or SIGINT (Ctrl+C):
+
+```bash
+kill -TERM <pid>
+```
+
+The server performs graceful shutdown:
+- Stops the watcher
+- Removes `service.json`
+- Logs shutdown event
+
+## Dispatch File Format
+
+Dispatch files are markdown with YAML frontmatter:
+
+```markdown
+---
+phase: phase-name       # Optional: phase identifier
+model: opus            # Optional: model to use (default: opus)
+---
+
+# PHASE_PROMPT
+
+This content is passed to the ir-kat skill as the PHASE_PROMPT.
+```
+
+### Frontmatter Fields
+
+- `phase` (optional): Human-readable phase name. Appears in logs and status.
+- `model` (optional): Model identifier. Defaults to `opus`.
+
+### Body
+
+The body (everything after `---`) is the PHASE_PROMPT passed to `/ir-kat`.
+
+### Validation
+
+- Frontmatter must be valid YAML
+- Body must be non-empty
+- Malformed files are logged as errors and deleted without blocking the server
+
+## Status File Schema
+
+`service.json` reflects the current server state. The schema is a discriminated union based on `status`:
+
+### Idle
+
+Server is ready to accept dispatch files.
+
+```json
+{
+  "status": "idle",
+  "pid": 12345,
+  "started": "2026-02-09T15:00:00.000Z"
+}
+```
+
+### Busy
+
+Server is executing a phase.
+
+```json
+{
+  "status": "busy",
+  "pid": 12345,
+  "started": "2026-02-09T15:00:00.000Z",
+  "phase": "my-phase",
+  "phaseStarted": "2026-02-09T15:01:00.000Z"
+}
+```
+
+### Done
+
+Phase completed successfully.
+
+```json
+{
+  "status": "done",
+  "pid": 12345,
+  "started": "2026-02-09T15:00:00.000Z",
+  "phase": "my-phase",
+  "phaseStarted": "2026-02-09T15:01:00.000Z",
+  "phaseCompleted": "2026-02-09T15:05:00.000Z",
+  "costUsd": 0.45,
+  "turns": 12
+}
+```
+
+### Blocked
+
+Phase failed or encountered an error.
+
+```json
+{
+  "status": "blocked",
+  "pid": 12345,
+  "started": "2026-02-09T15:00:00.000Z",
+  "phase": "my-phase",
+  "phaseStarted": "2026-02-09T15:01:00.000Z",
+  "phaseCompleted": "2026-02-09T15:05:00.000Z",
+  "error": "Max turns reached",
+  "costUsd": 1.20,
+  "turns": 200
+}
+```
+
+### State Transitions
+
+```
+idle → busy → done → idle
+       ↓      ↓
+       → blocked → idle
+```
+
+## Service Log
+
+`service.log` contains timestamped, human-readable log entries:
+
+```
+[2026-02-09 15:00:00] [INFO] Pharaoh server starting {"pid":12345,"cwd":"/path/to/project"}
+[2026-02-09 15:00:00] [INFO] Watcher started {"path":"/path/to/project/.ushabti/dispatch"}
+[2026-02-09 15:00:00] [INFO] Pharaoh server ready {"dispatchPath":"/path/to/project/.ushabti/dispatch"}
+[2026-02-09 15:01:00] [INFO] Processing dispatch file {"path":"..."}
+[2026-02-09 15:01:00] [INFO] Dispatch file parsed {"phase":"my-phase","model":"opus"}
+[2026-02-09 15:01:00] [INFO] Starting phase execution {"phase":"my-phase"}
+[2026-02-09 15:05:00] [INFO] Phase completed successfully {"phase":"my-phase","turns":12,"costUsd":0.45,"durationMs":240000}
+```
+
+### Log Levels
+
+- `DEBUG`: Verbose internal state (SDK messages, turn counts)
+- `INFO`: Normal operations (server start, file processed, phase complete)
+- `WARN`: Recoverable errors (file disappeared, transient failures)
+- `ERROR`: Unrecoverable errors (parse failures, SDK errors)
+
+## Architecture
+
+### Modules
+
+Pharaoh uses a flat `src/` directory with single-responsibility modules:
+
+- `index.ts` — CLI entry point and server initialization
+- `types.ts` — Discriminated union types for status and results
+- `status.ts` — Atomic reads/writes for `service.json`
+- `log.ts` — Structured logging to `service.log`
+- `parser.ts` — Dispatch file parsing (frontmatter + body)
+- `runner.ts` — SDK query execution via `ir-kat` skill
+- `watcher.ts` — Dispatch directory watcher with sequential queueing
+- `filesystem.ts` — Real filesystem implementation (production)
+
+### Dependency Injection
+
+All side effects (filesystem, SDK calls) are abstracted behind interfaces and injected as dependencies. This supports testing and follows the Open/Closed Principle.
+
+### Concurrency Model
+
+- **One job at a time**: Only one dispatch file is processed at a time
+- **Sequential queueing**: Files detected while busy are queued and processed in order
+- **Busy flag**: Prevents concurrent execution
+
+### SDK Configuration
+
+Pharaoh invokes the Claude Agent SDK with:
+
+- **Plugin**: Ushabti plugin from local path
+- **Model**: Configurable (defaults to `opus`)
+- **Permissions**: Bypass mode with sandbox enabled
+- **Max turns**: 200
+- **Hooks**: `PreToolUse` blocks `AskUserQuestion` with message "Proceed with your best judgement"
+
+## Future Work
+
+Phase 1 (this phase) does NOT include:
+
+- **Unit tests**: Tests will be added in a future phase once the architecture stabilizes
+- **Git integration**: Branching, committing, and PR creation are deferred
+- **Progress extraction**: Current agent and step tracking from SDK message stream
+- **Human feedback**: Filesystem-based mechanism for `AskUserQuestion`
+- **Retry logic**: Failed phases stay blocked; retries are manual
+- **Advanced queueing**: Prioritization, cancellation, or concurrent execution
+
+These features are intentionally deferred to keep this phase focused on proving the core loop works.

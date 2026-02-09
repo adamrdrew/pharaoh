@@ -1,0 +1,27 @@
+{
+  "name": "pharaoh",
+  "version": "0.1.0",
+  "description": "A filesystem-based job runner built on the Claude Agent SDK",
+  "type": "module",
+  "bin": {
+    "pharaoh": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "serve": "tsx src/index.ts serve"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.2.37",
+    "chokidar": "4.0.3",
+    "gray-matter": "4.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.7",
+    "tsx": "4.19.2",
+    "typescript": "5.7.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

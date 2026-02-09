@@ -1,0 +1,112 @@
+phase:
+  id: "0001"
+  slug: pharaoh-foundation
+  title: "Pharaoh Foundation"
+  status: complete
+
+steps:
+  - id: S001
+    title: "Project Scaffolding"
+    implemented: true
+    reviewed: true
+    notes: "Created package.json with SDK v0.2.37, tsconfig.json with strict mode, installed dependencies. Build and typecheck scripts working."
+    touched:
+      - package.json
+      - tsconfig.json
+      - src/placeholder.ts
+
+  - id: S002
+    title: "Core Types and State Machine"
+    implemented: true
+    reviewed: true
+    notes: "Created discriminated unions for ServiceStatus (idle/busy/done/blocked), DispatchFile, PhaseResult with type guards. No any types used."
+    touched:
+      - src/types.ts
+
+  - id: S003
+    title: "Status Manager"
+    implemented: true
+    reviewed: true
+    notes: "Created StatusManager with injectable Filesystem, atomic writes via temp file + rename, state transition methods (setIdle/setBusy/setDone/setBlocked). All methods have explicit return types."
+    touched:
+      - src/status.ts
+
+  - id: S004
+    title: "Structured Logger"
+    implemented: true
+    reviewed: true
+    notes: "Created Logger with injectable Filesystem, methods for all log levels (debug/info/warn/error), timestamped entries with structured context. No console.log in production code."
+    touched:
+      - src/log.ts
+
+  - id: S005
+    title: "Dispatch File Parser"
+    implemented: true
+    reviewed: true
+    notes: "Created parseDispatchFile function using gray-matter, returns typed ParseResult (success/failure), validates non-empty body, defaults model to 'opus'. No throwing on expected failures."
+    touched:
+      - src/parser.ts
+
+  - id: S006
+    title: "SDK Query Runner"
+    implemented: true
+    reviewed: true
+    notes: "Created PhaseRunner with injectable dependencies, constructs SDK query with ir-kat skill, handles PreToolUse hook to block AskUserQuestion, processes message stream, logs events, returns typed PhaseResult with cost/duration. Uses bypassPermissions mode with sandbox enabled."
+    touched:
+      - src/runner.ts
+
+  - id: S007
+    title: "Dispatch Watcher"
+    implemented: true
+    reviewed: true
+    notes: "Created DispatchWatcher with injectable dependencies, watches .ushabti/dispatch/*.md using chokidar, queues files when busy, processes sequentially. Handles parse errors by logging and deleting file without crashing. Transitions status through idle→busy→done/blocked→idle cycle."
+    touched:
+      - src/watcher.ts
+
+  - id: S008
+    title: "CLI Entry Point"
+    implemented: true
+    reviewed: true
+    notes: "Created CLI entry point with serve command, wires together real filesystem implementation, logger, status manager, runner, and watcher. Handles SIGTERM/SIGINT for graceful shutdown, uncaught errors logged before exit. Writes service.json on startup."
+    touched:
+      - src/index.ts
+      - src/filesystem.ts
+
+  - id: S009
+    title: "Integration Smoke Test"
+    implemented: true
+    reviewed: true
+    notes: "Verified end-to-end: server starts and writes idle status, watcher detects .md files in dispatch/, parser extracts frontmatter, status transitions to busy, SDK query begins execution, graceful shutdown removes service.json. All acceptance criteria met."
+    touched: []
+
+  - id: S010
+    title: "Documentation Reconciliation"
+    implemented: true
+    reviewed: true
+    notes: "Updated .ushabti/docs/index.md with comprehensive documentation: how to run, dispatch file format, status file schema with state machine, service log format, architecture overview, and future work. No stale information remains."
+    touched:
+      - .ushabti/docs/index.md
+
+  - id: F001
+    title: "Remove Type Assertions in parser.ts"
+    implemented: true
+    reviewed: true
+    notes: "Replaced type assertions with runtime type validation using typeof checks for frontmatter phase and model fields."
+    touched:
+      - src/parser.ts
+
+  - id: F002
+    title: "Add Runtime Validation for status.ts JSON Parse"
+    implemented: true
+    reviewed: true
+    notes: "Added isValidServiceStatus type guard function that validates all required fields based on status discriminator. Updated read() method to validate parsed JSON and return typed error on invalid structure or parse failure."
+    touched:
+      - src/status.ts
+
+  - id: F003
+    title: "Replace console.error with Logger or Document Exception"
+    implemented: true
+    reviewed: true
+    notes: "Documented console.error as explicit bootstrap exception with inline comment explaining it occurs before logger initialization during CLI argument parsing."
+    touched:
+      - src/index.ts
