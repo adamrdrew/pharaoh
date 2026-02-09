@@ -1,0 +1,1 @@
+{"version":3,"file":"status-throttler.d.ts","sourceRoot":"","sources":["../src/status-throttler.ts"],"names":[],"mappings":"AAEA;;GAEG;AACH,qBAAa,eAAe;IAC1B,OAAO,CAAC,aAAa,CAAK;IAC1B,OAAO,CAAC,QAAQ,CAAC,UAAU,CAAS;gBAExB,UAAU,GAAE,MAAa;IAIrC,WAAW,IAAI,OAAO;IAKtB,OAAO,CAAC,aAAa;CAOtB"}

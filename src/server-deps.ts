@@ -7,6 +7,7 @@ import { PhaseRunner } from './runner.js';
 import { DispatchWatcher } from './watcher.js';
 import { GitOperations } from './git.js';
 import { RealCommandExecutor } from './command-executor.js';
+import { EventWriter } from './event-writer.js';
 import type { Filesystem } from './status.js';
 
 export interface ServerPaths {
@@ -14,6 +15,7 @@ export interface ServerPaths {
   readonly dispatchPath: string;
   readonly statusPath: string;
   readonly logPath: string;
+  readonly eventsPath: string;
 }
 
 export interface ServerConfig {
@@ -35,7 +37,7 @@ function createCoreServices(fs: Filesystem, paths: ServerPaths): { logger: Logge
 }
 
 function createDispatchWatcher(fs: Filesystem, core: { logger: Logger; status: StatusManager }, paths: ServerPaths, config: ServerConfig): DispatchWatcher {
-  const runner = createPhaseRunner(core, paths, config);
+  const runner = createPhaseRunner(fs, core, paths, config);
   const git = createGitOperations();
   const deps = { fs, logger: core.logger, status: core.status, runner, git };
   const options = { dispatchPath: paths.dispatchPath, pid: process.pid, started: new Date().toISOString() };
@@ -46,6 +48,7 @@ function createGitOperations(): GitOperations {
   return new GitOperations(new RealCommandExecutor());
 }
 
-function createPhaseRunner(core: { logger: Logger; status: StatusManager }, paths: ServerPaths, config: ServerConfig): PhaseRunner {
-  return new PhaseRunner(core.logger, core.status, { cwd: paths.cwd, model: config.model ?? 'claude-opus-4-20250514' });
+function createPhaseRunner(fs: Filesystem, core: { logger: Logger; status: StatusManager }, paths: ServerPaths, config: ServerConfig): PhaseRunner {
+  const eventWriter = new EventWriter(fs, paths.eventsPath);
+  return new PhaseRunner(core.logger, core.status, { cwd: paths.cwd, model: config.model ?? 'claude-opus-4-20250514' }, eventWriter);
 }

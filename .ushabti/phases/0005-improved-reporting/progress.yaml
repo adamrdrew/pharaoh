@@ -1,0 +1,220 @@
+phase:
+  id: "0005"
+  slug: improved-reporting
+  title: "Improved Reporting: Event Capture and Enriched Status"
+  status: complete
+
+steps:
+  - id: S001
+    title: Define event types and schema
+    implemented: true
+    reviewed: true
+    notes: "Created event-writer.ts with PharaohEvent interface and PharaohEventType union. Defined EventWriter class structure."
+    touched:
+      - src/event-writer.ts
+
+  - id: S002
+    title: Implement EventWriter class
+    implemented: true
+    reviewed: true
+    notes: "EventWriter class implemented with write() and clear() methods using injected Filesystem interface."
+    touched:
+      - src/event-writer.ts
+
+  - id: S003
+    title: Add events file path to server-paths
+    implemented: true
+    reviewed: true
+    notes: "Added eventsPath to ServerPaths interface and createServerPaths function."
+    touched:
+      - src/server-paths.ts
+      - src/server-deps.ts
+
+  - id: S004
+    title: Create event builders for SDK messages
+    implemented: true
+    reviewed: true
+    notes: "Created event-builders.ts with builder functions for all SDK message types. Implemented truncation logic (500 chars for tool input, 200 for text)."
+    touched:
+      - src/event-builders.ts
+
+  - id: S005
+    title: Wire EventWriter into PhaseRunner
+    implemented: true
+    reviewed: true
+    notes: "Added EventWriter as constructor parameter to PhaseRunner. Updated server-deps.ts to instantiate EventWriter and pass to PhaseRunner."
+    touched:
+      - src/runner.ts
+      - src/server-deps.ts
+
+  - id: S006
+    title: Clear events file at phase start
+    implemented: true
+    reviewed: true
+    notes: "Added eventWriter.clear() call at the start of initializePhase()."
+    touched:
+      - src/runner.ts
+
+  - id: S007
+    title: Capture assistant message events
+    implemented: true
+    reviewed: true
+    notes: "Created runner-events.ts with captureAssistantEvents function. Integrated event capture into runner for assistant messages."
+    touched:
+      - src/runner-events.ts
+      - src/runner.ts
+
+  - id: S008
+    title: Capture tool progress events with debouncing
+    implemented: true
+    reviewed: true
+    notes: "Created event-debouncer.ts with ProgressDebouncer class. Added captureToolProgressEvent to runner-events.ts. Integrated debounced tool_progress event capture into runner."
+    touched:
+      - src/event-debouncer.ts
+      - src/runner-events.ts
+      - src/runner.ts
+
+  - id: S009
+    title: Capture tool summary events
+    implemented: true
+    reviewed: true
+    notes: "Added captureToolSummaryEvent to runner-events.ts. Integrated tool_use_summary event capture into runner."
+    touched:
+      - src/runner-events.ts
+      - src/runner.ts
+
+  - id: S010
+    title: Capture system and result events
+    implemented: true
+    reviewed: true
+    notes: "Added captureSystemEvent and captureResultEvent to runner-events.ts. Integrated system and result event capture into runner."
+    touched:
+      - src/runner-events.ts
+      - src/runner.ts
+
+  - id: S011
+    title: Add enriched fields to ServiceStatusBusy
+    implemented: true
+    reviewed: true
+    notes: "Added turnsElapsed and runningCostUsd fields to ServiceStatusBusy interface."
+    touched:
+      - src/types.ts
+
+  - id: S012
+    title: Add enriched fields to SetBusyInput
+    implemented: true
+    reviewed: true
+    notes: "Added turnsElapsed and runningCostUsd fields to SetBusyInput interface. Updated buildBusyStatus to include new fields."
+    touched:
+      - src/status-inputs.ts
+      - src/status-setters.ts
+
+  - id: S013
+    title: Implement running cost calculation
+    implemented: true
+    reviewed: true
+    notes: "Created cost-calculator.ts with calculateRunningCost function using Opus 4 pricing heuristic."
+    touched:
+      - src/cost-calculator.ts
+
+  - id: S014
+    title: Track running metrics in runner state
+    implemented: true
+    reviewed: true
+    notes: "Added RunnerState interface with token tracking. Updated updateState to accumulate tokens and calculate running cost from assistant messages."
+    touched:
+      - src/runner.ts
+
+  - id: S015
+    title: Update status with running metrics
+    implemented: true
+    reviewed: true
+    notes: "Created status-throttler.ts with StatusThrottler class. Added throttled status updates with running metrics to runner after each message."
+    touched:
+      - src/status-throttler.ts
+      - src/runner.ts
+
+  - id: S016
+    title: Initialize enriched fields on first setBusy call
+    implemented: true
+    reviewed: true
+    notes: "Updated initializePhase to include turnsElapsed: 0 and runningCostUsd: 0 in initial setBusy call."
+    touched:
+      - src/runner.ts
+
+  - id: S017
+    title: Update documentation for events file
+    implemented: true
+    reviewed: true
+    notes: "Added Event Stream section to docs with format, schema, event types table, lifecycle, truncation rules, and example events."
+    touched:
+      - .ushabti/docs/index.md
+
+  - id: S018
+    title: Update documentation for enriched status
+    implemented: true
+    reviewed: true
+    notes: "Updated Busy status section in docs with turnsElapsed and runningCostUsd fields. Added field descriptions and note about cost accuracy."
+    touched:
+      - .ushabti/docs/index.md
+
+  - id: S019
+    title: Decompose event-builders.ts to respect 100-line limit
+    implemented: true
+    reviewed: true
+    notes: "Split event-builders.ts into focused modules: event-builders-utils.ts (utilities), event-builders-assistant.ts (assistant events), event-builders-tool.ts (tool events), event-builders-system.ts (system and result events). Updated imports in runner-events.ts. Deleted original file."
+    touched:
+      - src/event-builders-utils.ts
+      - src/event-builders-assistant.ts
+      - src/event-builders-tool.ts
+      - src/event-builders-system.ts
+      - src/runner-events.ts
+
+  - id: S020
+    title: Decompose runner-events.ts to respect 100-line limit
+    implemented: true
+    reviewed: true
+    notes: "Split runner-events.ts into focused modules: runner-events-assistant.ts (assistant event capture), runner-events-tool.ts (tool event capture), runner-events-system.ts (system and result event capture). Updated imports in runner.ts. Deleted original file."
+    touched:
+      - src/runner-events-assistant.ts
+      - src/runner-events-tool.ts
+      - src/runner-events-system.ts
+      - src/runner.ts
+
+  - id: S021
+    title: Decompose runner.ts to respect 100-line limit
+    implemented: true
+    reviewed: true
+    notes: "Created runner-state.ts with RunnerState and PhaseContext interfaces plus state management functions. Created runner-routing.ts with message routing and dispatch logic. Reduced runner.ts to 96 lines (orchestration only). Dependency injection maintained."
+    touched:
+      - src/runner-state.ts
+      - src/runner-routing.ts
+      - src/runner.ts
+
+  - id: S022
+    title: Add runtime validation for SDK message type assertions
+    implemented: true
+    reviewed: true
+    notes: "Created runner-guards.ts with type guard functions (isResultMessage, isAssistantMessage, isToolProgressMessage, isToolSummaryMessage, isSystemMessage) performing runtime validation of message shape. Replaced type assertions in runner-routing.ts and runner-state.ts with validated type narrowing using guards. Messages validated at system boundary before processing."
+    touched:
+      - src/runner-guards.ts
+      - src/runner-routing.ts
+      - src/runner-state.ts
+
+  - id: S023
+    title: Add comprehensive test coverage for new modules
+    implemented: true
+    reviewed: true
+    notes: "Created comprehensive test files for all new modules: event-writer.test.ts, event-builders-assistant.test.ts, event-builders-tool.test.ts, event-builders-system.test.ts, event-debouncer.test.ts, status-throttler.test.ts, cost-calculator.test.ts, runner-events-assistant.test.ts, runner-events-tool.test.ts, runner-events-system.test.ts, runner-guards.test.ts. All tests use FakeFilesystem for I/O (L08 compliance). All public methods covered, all branches tested, error conditions handled. All 77 tests pass."
+    touched:
+      - tests/event-writer.test.ts
+      - tests/event-builders-assistant.test.ts
+      - tests/event-builders-tool.test.ts
+      - tests/event-builders-system.test.ts
+      - tests/event-debouncer.test.ts
+      - tests/status-throttler.test.ts
+      - tests/cost-calculator.test.ts
+      - tests/runner-events-assistant.test.ts
+      - tests/runner-events-tool.test.ts
+      - tests/runner-events-system.test.ts
+      - tests/runner-guards.test.ts

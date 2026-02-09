@@ -19,6 +19,8 @@ export function buildBusyStatus(input: SetBusyInput): ServiceStatus {
     started: input.started,
     phase: input.phase,
     phaseStarted: input.phaseStarted,
+    turnsElapsed: input.turnsElapsed,
+    runningCostUsd: input.runningCostUsd,
   };
 }
 

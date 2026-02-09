@@ -7,6 +7,7 @@ export interface ServerPaths {
     readonly dispatchPath: string;
     readonly statusPath: string;
     readonly logPath: string;
+    readonly eventsPath: string;
 }
 export interface ServerConfig {
     readonly model?: string;

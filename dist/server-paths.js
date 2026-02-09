@@ -5,6 +5,6 @@ export function buildPaths(cwd) {
     return createServerPaths(cwd, pharaohDir);
 }
 function createServerPaths(cwd, pharaohDir) {
-    return { cwd, dispatchPath: path.join(pharaohDir, 'dispatch'), statusPath: path.join(pharaohDir, 'pharaoh.json'), logPath: path.join(pharaohDir, 'pharaoh.log') };
+    return { cwd, dispatchPath: path.join(pharaohDir, 'dispatch'), statusPath: path.join(pharaohDir, 'pharaoh.json'), logPath: path.join(pharaohDir, 'pharaoh.log'), eventsPath: path.join(pharaohDir, 'events.jsonl') };
 }
 //# sourceMappingURL=server-paths.js.map
