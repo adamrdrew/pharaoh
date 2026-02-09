@@ -10,7 +10,7 @@ export function updateState(message, state) {
 function updateAssistantMetrics(msg, state) {
     state.messageCounter++;
     state.turnsElapsed = state.messageCounter;
-    accumulateTokens(msg.usage, state);
+    accumulateTokens(msg.message.usage, state);
 }
 function accumulateTokens(usage, state) {
     if (usage) {

@@ -12,12 +12,14 @@ interface TextBlock {
 type ContentBlock = ToolUseBlock | TextBlock;
 interface AssistantMessage {
     readonly type: 'assistant';
-    readonly content: readonly ContentBlock[];
-    readonly usage?: {
-        readonly input_tokens: number;
-        readonly output_tokens: number;
+    readonly message: {
+        readonly content: readonly ContentBlock[];
+        readonly usage?: {
+            readonly input_tokens: number;
+            readonly output_tokens: number;
+        };
     };
 }
-export declare function captureAssistantEvents(message: AssistantMessage, turnNumber: number, eventWriter: EventWriter): Promise<void>;
+export declare function captureAssistantEvents(msg: AssistantMessage, turnNumber: number, eventWriter: EventWriter): Promise<void>;
 export {};
 //# sourceMappingURL=runner-events-assistant.d.ts.map

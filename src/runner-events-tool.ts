@@ -10,7 +10,8 @@ import {
 interface ToolProgressMessage {
   readonly type: 'tool_progress';
   readonly tool_use_id: string;
-  readonly elapsed_millis: number;
+  readonly tool_name?: string;
+  readonly elapsed_time_seconds: number;
 }
 
 export async function captureToolProgressEvent(
@@ -32,7 +33,7 @@ async function writeProgressEvent(message: ToolProgressMessage, eventWriter: Eve
 interface ToolSummaryMessage {
   readonly type: 'tool_use_summary';
   readonly summary: string;
-  readonly tool_use_ids: readonly string[];
+  readonly preceding_tool_use_ids: readonly string[];
 }
 
 export async function captureToolSummaryEvent(

@@ -40,48 +40,72 @@ describe('isResultMessage', () => {
 });
 
 describe('isAssistantMessage', () => {
-  it('returns true for valid assistant message', () => {
-    expect(isAssistantMessage({ type: 'assistant', content: [] })).toBe(true);
+  it('returns true for valid SDK assistant message', () => {
+    expect(isAssistantMessage({ type: 'assistant', message: { content: [] } })).toBe(true);
   });
 
-  it('returns false for missing content', () => {
-    expect(isAssistantMessage({ type: 'assistant' })).toBe(false);
+  it('returns true with usage data', () => {
+    expect(isAssistantMessage({ type: 'assistant', message: { content: [], usage: { input_tokens: 10, output_tokens: 5 } } })).toBe(true);
+  });
+
+  it('returns false for missing message wrapper', () => {
+    expect(isAssistantMessage({ type: 'assistant', content: [] })).toBe(false);
+  });
+
+  it('returns false for missing content inside message', () => {
+    expect(isAssistantMessage({ type: 'assistant', message: {} })).toBe(false);
   });
 
   it('returns false for non-array content', () => {
-    expect(isAssistantMessage({ type: 'assistant', content: 'text' })).toBe(false);
+    expect(isAssistantMessage({ type: 'assistant', message: { content: 'text' } })).toBe(false);
+  });
+
+  it('returns false for null message wrapper', () => {
+    expect(isAssistantMessage({ type: 'assistant', message: null })).toBe(false);
   });
 });
 
 describe('isToolProgressMessage', () => {
   it('returns true for valid tool progress message', () => {
-    expect(isToolProgressMessage({ type: 'tool_progress', tool_use_id: 'id', elapsed_millis: 1000 })).toBe(true);
+    expect(isToolProgressMessage({ type: 'tool_progress', tool_use_id: 'id', elapsed_time_seconds: 1.5 })).toBe(true);
+  });
+
+  it('returns true with tool_name', () => {
+    expect(isToolProgressMessage({ type: 'tool_progress', tool_use_id: 'id', tool_name: 'read', elapsed_time_seconds: 2 })).toBe(true);
   });
 
   it('returns false for missing tool_use_id', () => {
-    expect(isToolProgressMessage({ type: 'tool_progress', elapsed_millis: 1000 })).toBe(false);
+    expect(isToolProgressMessage({ type: 'tool_progress', elapsed_time_seconds: 1 })).toBe(false);
   });
 
   it('returns false for non-string tool_use_id', () => {
-    expect(isToolProgressMessage({ type: 'tool_progress', tool_use_id: 123, elapsed_millis: 1000 })).toBe(false);
+    expect(isToolProgressMessage({ type: 'tool_progress', tool_use_id: 123, elapsed_time_seconds: 1 })).toBe(false);
   });
 
-  it('returns false for non-number elapsed_millis', () => {
-    expect(isToolProgressMessage({ type: 'tool_progress', tool_use_id: 'id', elapsed_millis: 'fast' })).toBe(false);
+  it('returns false for non-number elapsed_time_seconds', () => {
+    expect(isToolProgressMessage({ type: 'tool_progress', tool_use_id: 'id', elapsed_time_seconds: 'fast' })).toBe(false);
+  });
+
+  it('returns false for old elapsed_millis field', () => {
+    expect(isToolProgressMessage({ type: 'tool_progress', tool_use_id: 'id', elapsed_millis: 1000 })).toBe(false);
   });
 });
 
 describe('isToolSummaryMessage', () => {
   it('returns true for valid tool summary message', () => {
-    expect(isToolSummaryMessage({ type: 'tool_use_summary', summary: 'done', tool_use_ids: ['id1'] })).toBe(true);
+    expect(isToolSummaryMessage({ type: 'tool_use_summary', summary: 'done', preceding_tool_use_ids: ['id1'] })).toBe(true);
   });
 
   it('returns false for missing summary', () => {
-    expect(isToolSummaryMessage({ type: 'tool_use_summary', tool_use_ids: ['id1'] })).toBe(false);
+    expect(isToolSummaryMessage({ type: 'tool_use_summary', preceding_tool_use_ids: ['id1'] })).toBe(false);
   });
 
-  it('returns false for non-array tool_use_ids', () => {
-    expect(isToolSummaryMessage({ type: 'tool_use_summary', summary: 'done', tool_use_ids: 'id1' })).toBe(false);
+  it('returns false for non-array preceding_tool_use_ids', () => {
+    expect(isToolSummaryMessage({ type: 'tool_use_summary', summary: 'done', preceding_tool_use_ids: 'id1' })).toBe(false);
+  });
+
+  it('returns false for old tool_use_ids field', () => {
+    expect(isToolSummaryMessage({ type: 'tool_use_summary', summary: 'done', tool_use_ids: ['id1'] })).toBe(false);
   });
 });
 

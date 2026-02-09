@@ -28,7 +28,7 @@ export function updateState(message: unknown, state: RunnerState): void {
 function updateAssistantMetrics(msg: AssistantMessage, state: RunnerState): void {
   state.messageCounter++;
   state.turnsElapsed = state.messageCounter;
-  accumulateTokens(msg.usage, state);
+  accumulateTokens(msg.message.usage, state);
 }
 
 function accumulateTokens(usage: { input_tokens: number; output_tokens: number } | undefined, state: RunnerState): void {

@@ -15,21 +15,24 @@ export interface ResultMessage {
 }
 export interface AssistantMessage {
     readonly type: 'assistant';
-    readonly content: readonly unknown[];
-    readonly usage?: {
-        readonly input_tokens: number;
-        readonly output_tokens: number;
+    readonly message: {
+        readonly content: readonly unknown[];
+        readonly usage?: {
+            readonly input_tokens: number;
+            readonly output_tokens: number;
+        };
     };
 }
 export interface ToolProgressMessage {
     readonly type: 'tool_progress';
     readonly tool_use_id: string;
-    readonly elapsed_millis: number;
+    readonly tool_name?: string;
+    readonly elapsed_time_seconds: number;
 }
 export interface ToolSummaryMessage {
     readonly type: 'tool_use_summary';
     readonly summary: string;
-    readonly tool_use_ids: readonly string[];
+    readonly preceding_tool_use_ids: readonly string[];
 }
 export interface SystemMessage {
     readonly type: 'system';

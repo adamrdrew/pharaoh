@@ -17,8 +17,7 @@ interface TextBlock {
 
 type ContentBlock = ToolUseBlock | TextBlock;
 
-interface AssistantMessage {
-  readonly type: 'assistant';
+interface AssistantMessageInner {
   readonly content: readonly ContentBlock[];
   readonly usage?: {
     readonly input_tokens: number;
@@ -26,7 +25,12 @@ interface AssistantMessage {
   };
 }
 
-export function buildAssistantToolCallEvent(message: AssistantMessage, toolUse: ToolUseBlock): PharaohEvent {
+interface AssistantMessage {
+  readonly type: 'assistant';
+  readonly message: AssistantMessageInner;
+}
+
+export function buildAssistantToolCallEvent(msg: AssistantMessage, toolUse: ToolUseBlock): PharaohEvent {
   const inputJson = JSON.stringify(toolUse.input);
   return createToolCallEvent(toolUse.name, toolUse.id, inputJson);
 }
@@ -35,12 +39,12 @@ function createToolCallEvent(toolName: string, toolId: string, inputJson: string
   return { timestamp: timestamp(), type: 'tool_call', summary: `Tool: ${toolName}`, detail: { tool_use_id: toolId, tool_name: toolName, input: truncate(inputJson, 500) } };
 }
 
-export function buildAssistantTextEvent(message: AssistantMessage, textBlock: TextBlock): PharaohEvent {
+export function buildAssistantTextEvent(msg: AssistantMessage, textBlock: TextBlock): PharaohEvent {
   return { timestamp: timestamp(), type: 'text', summary: truncate(textBlock.text, 200), detail: { full_text: textBlock.text } };
 }
 
-export function buildAssistantTurnEvent(message: AssistantMessage, turnNumber: number): PharaohEvent {
-  return createTurnEvent(turnNumber, message.usage);
+export function buildAssistantTurnEvent(msg: AssistantMessage, turnNumber: number): PharaohEvent {
+  return createTurnEvent(turnNumber, msg.message.usage);
 }
 
 function createTurnEvent(turnNumber: number, usage?: { readonly input_tokens: number; readonly output_tokens: number }): PharaohEvent {

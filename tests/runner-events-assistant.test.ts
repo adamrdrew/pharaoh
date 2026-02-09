@@ -24,15 +24,16 @@ class FakeFilesystem implements Filesystem {
   }
 }
 
+function makeMsg(content: unknown[] = [], usage?: { input_tokens: number; output_tokens: number }) {
+  return { type: 'assistant' as const, message: { content, usage } };
+}
+
 describe('captureAssistantEvents', () => {
   it('captures tool use events', async () => {
     const fs = new FakeFilesystem();
     const writer = new EventWriter(fs, '/events.jsonl');
-    const message = {
-      type: 'assistant' as const,
-      content: [{ type: 'tool_use' as const, id: 'tool-1', name: 'read', input: { path: '/file.txt' } }]
-    };
-    await captureAssistantEvents(message, 1, writer);
+    const msg = makeMsg([{ type: 'tool_use' as const, id: 'tool-1', name: 'read', input: { path: '/file.txt' } }]);
+    await captureAssistantEvents(msg, 1, writer);
     const content = await fs.readFile('/events.jsonl');
     const lines = content.trim().split('\n');
     const toolEvent = JSON.parse(lines[0]);
@@ -43,11 +44,8 @@ describe('captureAssistantEvents', () => {
   it('captures text events', async () => {
     const fs = new FakeFilesystem();
     const writer = new EventWriter(fs, '/events.jsonl');
-    const message = {
-      type: 'assistant' as const,
-      content: [{ type: 'text' as const, text: 'Hello world' }]
-    };
-    await captureAssistantEvents(message, 1, writer);
+    const msg = makeMsg([{ type: 'text' as const, text: 'Hello world' }]);
+    await captureAssistantEvents(msg, 1, writer);
     const content = await fs.readFile('/events.jsonl');
     const lines = content.trim().split('\n');
     const textEvent = JSON.parse(lines[0]);
@@ -55,33 +53,28 @@ describe('captureAssistantEvents', () => {
     expect(textEvent.summary).toBe('Hello world');
   });
 
-  it('captures turn event', async () => {
+  it('captures turn event with usage from message wrapper', async () => {
     const fs = new FakeFilesystem();
     const writer = new EventWriter(fs, '/events.jsonl');
-    const message = {
-      type: 'assistant' as const,
-      content: [],
-      usage: { input_tokens: 100, output_tokens: 50 }
-    };
-    await captureAssistantEvents(message, 2, writer);
+    const msg = makeMsg([], { input_tokens: 100, output_tokens: 50 });
+    await captureAssistantEvents(msg, 2, writer);
     const content = await fs.readFile('/events.jsonl');
     const lines = content.trim().split('\n');
     const turnEvent = JSON.parse(lines[0]);
     expect(turnEvent.type).toBe('turn');
     expect(turnEvent.summary).toBe('Turn 2');
+    expect(turnEvent.detail.input_tokens).toBe(100);
+    expect(turnEvent.detail.output_tokens).toBe(50);
   });
 
   it('captures multiple content blocks', async () => {
     const fs = new FakeFilesystem();
     const writer = new EventWriter(fs, '/events.jsonl');
-    const message = {
-      type: 'assistant' as const,
-      content: [
-        { type: 'text' as const, text: 'Processing' },
-        { type: 'tool_use' as const, id: 'tool-1', name: 'read', input: {} }
-      ]
-    };
-    await captureAssistantEvents(message, 1, writer);
+    const msg = makeMsg([
+      { type: 'text' as const, text: 'Processing' },
+      { type: 'tool_use' as const, id: 'tool-1', name: 'read', input: {} }
+    ]);
+    await captureAssistantEvents(msg, 1, writer);
     const content = await fs.readFile('/events.jsonl');
     const lines = content.trim().split('\n');
     expect(lines.length).toBe(3);

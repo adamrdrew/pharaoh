@@ -1,0 +1,27 @@
+phase:
+  id: 0006
+  slug: add-readme
+  title: Add README
+  status: planned
+
+steps:
+  - id: S001
+    title: Read project files to understand context
+    implemented: false
+    reviewed: false
+    notes: ""
+    touched: []
+
+  - id: S002
+    title: Create README.md
+    implemented: false
+    reviewed: false
+    notes: ""
+    touched: []
+
+  - id: S003
+    title: Verify build still succeeds
+    implemented: false
+    reviewed: false
+    notes: ""
+    touched: []

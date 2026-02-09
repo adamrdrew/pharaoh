@@ -10,16 +10,19 @@ interface TextBlock {
     readonly text: string;
 }
 type ContentBlock = ToolUseBlock | TextBlock;
-interface AssistantMessage {
-    readonly type: 'assistant';
+interface AssistantMessageInner {
     readonly content: readonly ContentBlock[];
     readonly usage?: {
         readonly input_tokens: number;
         readonly output_tokens: number;
     };
 }
-export declare function buildAssistantToolCallEvent(message: AssistantMessage, toolUse: ToolUseBlock): PharaohEvent;
-export declare function buildAssistantTextEvent(message: AssistantMessage, textBlock: TextBlock): PharaohEvent;
-export declare function buildAssistantTurnEvent(message: AssistantMessage, turnNumber: number): PharaohEvent;
+interface AssistantMessage {
+    readonly type: 'assistant';
+    readonly message: AssistantMessageInner;
+}
+export declare function buildAssistantToolCallEvent(msg: AssistantMessage, toolUse: ToolUseBlock): PharaohEvent;
+export declare function buildAssistantTextEvent(msg: AssistantMessage, textBlock: TextBlock): PharaohEvent;
+export declare function buildAssistantTurnEvent(msg: AssistantMessage, turnNumber: number): PharaohEvent;
 export {};
 //# sourceMappingURL=event-builders-assistant.d.ts.map

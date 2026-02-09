@@ -1,30 +1,30 @@
 // Event capture for assistant messages
 import { buildAssistantToolCallEvent, buildAssistantTextEvent, buildAssistantTurnEvent, } from './event-builders-assistant.js';
-export async function captureAssistantEvents(message, turnNumber, eventWriter) {
-    await captureContentEvents(message, eventWriter);
-    await captureTurnEvent(message, turnNumber, eventWriter);
+export async function captureAssistantEvents(msg, turnNumber, eventWriter) {
+    await captureContentEvents(msg, eventWriter);
+    await captureTurnEvent(msg, turnNumber, eventWriter);
 }
-async function captureContentEvents(message, eventWriter) {
-    for (const block of message.content) {
-        await captureContentBlock(message, block, eventWriter);
+async function captureContentEvents(msg, eventWriter) {
+    for (const block of msg.message.content) {
+        await captureContentBlock(msg, block, eventWriter);
     }
 }
-async function captureContentBlock(message, block, eventWriter) {
+async function captureContentBlock(msg, block, eventWriter) {
     if (block.type === 'tool_use')
-        await captureToolUse(message, block, eventWriter);
+        await captureToolUse(msg, block, eventWriter);
     if (block.type === 'text')
-        await captureText(message, block, eventWriter);
+        await captureText(msg, block, eventWriter);
 }
-async function captureToolUse(message, block, eventWriter) {
-    const event = buildAssistantToolCallEvent(message, block);
+async function captureToolUse(msg, block, eventWriter) {
+    const event = buildAssistantToolCallEvent(msg, block);
     await eventWriter.write(event);
 }
-async function captureText(message, block, eventWriter) {
-    const event = buildAssistantTextEvent(message, block);
+async function captureText(msg, block, eventWriter) {
+    const event = buildAssistantTextEvent(msg, block);
     await eventWriter.write(event);
 }
-async function captureTurnEvent(message, turnNumber, eventWriter) {
-    const event = buildAssistantTurnEvent(message, turnNumber);
+async function captureTurnEvent(msg, turnNumber, eventWriter) {
+    const event = buildAssistantTurnEvent(msg, turnNumber);
     await eventWriter.write(event);
 }
 //# sourceMappingURL=runner-events-assistant.js.map
