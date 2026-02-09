@@ -1,5 +1,5 @@
 {
-  "name": "pharaoh",
+  "name": "@adamrdrew/pharaoh",
   "version": "0.1.0",
   "description": "A filesystem-based job runner built on the Claude Agent SDK",
   "type": "module",
@@ -11,13 +11,17 @@
     "typecheck": "tsc --noEmit",
     "serve": "tsx src/index.ts serve",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
   },
+  "files": [
+    "dist/"
+  ],
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.2.37",
     "chokidar": "4.0.3",
     "gray-matter": "4.0.3",
-    "ushabti": "file:../ushabti"
+    "ushabti": "github:adamrdrew/ushabti"
   },
   "devDependencies": {
     "@types/node": "22.10.7",
@@ -25,6 +29,17 @@
     "typescript": "5.7.3",
     "vitest": "^4.0.18"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adamrdrew/pharaoh.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "claude",
+    "ushabti",
+    "agentic",
+    "development"
+  ],
   "engines": {
     "node": ">=20.0.0"
   }
