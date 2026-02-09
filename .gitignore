@@ -1,3 +1,4 @@
 .ushabti/service.json
 .ushabti/service.log
 
+node_modules

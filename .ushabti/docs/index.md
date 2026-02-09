@@ -31,6 +31,13 @@ npm run build
 npm run serve
 ```
 
+### Running Tests
+
+```bash
+npm test              # Run tests once
+npm run test:watch    # Run tests in watch mode
+```
+
 Or use the compiled binary:
 
 ```bash
@@ -188,6 +195,8 @@ idle → busy → done → idle
 
 ```
 [2026-02-09 15:00:00] [INFO] Pharaoh server starting {"pid":12345,"cwd":"/path/to/project"}
+[2026-02-09 15:00:00] [INFO] Pharaoh starting {"version":"0.1.0","cwd":"/path/to/project"}
+[2026-02-09 15:00:00] [INFO] Serving directory {"cwd":"/path/to/project","dispatchPath":"/path/to/project/.ushabti/dispatch"}
 [2026-02-09 15:00:00] [INFO] Watcher started {"path":"/path/to/project/.ushabti/dispatch"}
 [2026-02-09 15:00:00] [INFO] Pharaoh server ready {"dispatchPath":"/path/to/project/.ushabti/dispatch"}
 [2026-02-09 15:01:00] [INFO] Processing dispatch file {"path":"..."}
@@ -209,7 +218,7 @@ idle → busy → done → idle
 
 Pharaoh uses a flat `src/` directory with single-responsibility modules:
 
-- `index.ts` — CLI entry point and server initialization
+- `index.ts` — CLI entry point, server initialization, and version reading
 - `types.ts` — Discriminated union types for status and results
 - `status.ts` — Atomic reads/writes for `service.json`
 - `log.ts` — Structured logging to `service.log`
@@ -217,6 +226,10 @@ Pharaoh uses a flat `src/` directory with single-responsibility modules:
 - `runner.ts` — SDK query execution via `ir-kat` skill
 - `watcher.ts` — Dispatch directory watcher with sequential queueing
 - `filesystem.ts` — Real filesystem implementation (production)
+
+### Testing
+
+Pharaoh uses vitest for testing. Tests are located in `tests/` and mirror the structure of `src/`. All tests use fake implementations of the `Filesystem` interface to avoid touching the real filesystem (Law L08).
 
 ### Dependency Injection
 
@@ -242,7 +255,6 @@ Pharaoh invokes the Claude Agent SDK with:
 
 Phase 1 (this phase) does NOT include:
 
-- **Unit tests**: Tests will be added in a future phase once the architecture stabilizes
 - **Git integration**: Branching, committing, and PR creation are deferred
 - **Progress extraction**: Current agent and step tracking from SDK message stream
 - **Human feedback**: Filesystem-based mechanism for `AskUserQuestion`

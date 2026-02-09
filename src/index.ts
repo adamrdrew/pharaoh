@@ -9,6 +9,7 @@ import { Logger } from './log.js';
 import { StatusManager } from './status.js';
 import { PhaseRunner } from './runner.js';
 import { DispatchWatcher } from './watcher.js';
+import type { Filesystem } from './status.js';
 
 /**
  * Parse CLI arguments
@@ -17,6 +18,28 @@ function parseArgs(): { command: string } {
   const args = process.argv.slice(2);
   const command = args[0] ?? '';
   return { command };
+}
+
+/**
+ * Read version from package.json
+ * Returns the version string if found, or "unknown" if the file cannot be read,
+ * is malformed, or does not contain a version field.
+ */
+export async function readVersion(
+  fs: Filesystem,
+  cwd: string
+): Promise<string> {
+  try {
+    const packageJsonPath = path.join(cwd, 'package.json');
+    const packageJsonContent = await fs.readFile(packageJsonPath);
+    const packageJson = JSON.parse(packageJsonContent) as { version?: string };
+    if (packageJson.version) {
+      return packageJson.version;
+    }
+    return 'unknown';
+  } catch {
+    return 'unknown';
+  }
 }
 
 /**
@@ -41,6 +64,9 @@ async function serve(): Promise<void> {
     pluginPath,
     model,
   });
+
+  // Read version from package.json
+  const version = await readVersion(fs, cwd);
 
   const watcher = new DispatchWatcher(
     fs,
@@ -84,6 +110,8 @@ async function serve(): Promise<void> {
 
   await logger.info('Pharaoh server starting', { pid, cwd });
   await status.setIdle(pid, started);
+  await logger.info('Pharaoh starting', { version, cwd });
+  await logger.info('Serving directory', { cwd, dispatchPath });
   await watcher.start();
   await logger.info('Pharaoh server ready', { dispatchPath });
 }
@@ -106,4 +134,8 @@ async function main(): Promise<void> {
   }
 }
 
-void main();
+// Only run main() when this module is executed directly (not imported)
+// This allows tests to import readVersion without executing the server
+if (import.meta.url === `file://${process.argv[1]}`) {
+  void main();
+}

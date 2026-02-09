@@ -16,6 +16,25 @@ function parseArgs() {
     return { command };
 }
 /**
+ * Read version from package.json
+ * Returns the version string if found, or "unknown" if the file cannot be read,
+ * is malformed, or does not contain a version field.
+ */
+export async function readVersion(fs, cwd) {
+    try {
+        const packageJsonPath = path.join(cwd, 'package.json');
+        const packageJsonContent = await fs.readFile(packageJsonPath);
+        const packageJson = JSON.parse(packageJsonContent);
+        if (packageJson.version) {
+            return packageJson.version;
+        }
+        return 'unknown';
+    }
+    catch {
+        return 'unknown';
+    }
+}
+/**
  * Main server function
  */
 async function serve() {
@@ -35,6 +54,8 @@ async function serve() {
         pluginPath,
         model,
     });
+    // Read version from package.json
+    const version = await readVersion(fs, cwd);
     const watcher = new DispatchWatcher(fs, logger, status, runner, dispatchPath, pid, started);
     const shutdown = async () => {
         await logger.info('Shutting down gracefully');
@@ -63,6 +84,8 @@ async function serve() {
     });
     await logger.info('Pharaoh server starting', { pid, cwd });
     await status.setIdle(pid, started);
+    await logger.info('Pharaoh starting', { version, cwd });
+    await logger.info('Serving directory', { cwd, dispatchPath });
     await watcher.start();
     await logger.info('Pharaoh server ready', { dispatchPath });
 }
@@ -83,5 +106,9 @@ async function main() {
         process.exit(1);
     }
 }
-void main();
+// Only run main() when this module is executed directly (not imported)
+// This allows tests to import readVersion without executing the server
+if (import.meta.url === `file://${process.argv[1]}`) {
+    void main();
+}
 //# sourceMappingURL=index.js.map

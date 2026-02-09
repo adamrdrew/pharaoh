@@ -1,0 +1,51 @@
+phase:
+  id: 0002
+  slug: welcome-banner
+  title: Welcome Banner
+  status: complete
+
+steps:
+  - id: S001
+    title: Read version from package.json
+    implemented: true
+    reviewed: true
+    notes: "Version is read from package.json using injected fs instance. Errors are caught and result in version = 'unknown'."
+    touched:
+      - /Users/adam/Development/pharoh/src/index.ts
+
+  - id: S002
+    title: Add startup banner logs
+    implemented: true
+    reviewed: true
+    notes: "Banner logs added immediately after setIdle() call. Includes project name, version, and directory information using structured logging. Documentation updated to reflect new log entries."
+    touched:
+      - /Users/adam/Development/pharoh/src/index.ts
+      - /Users/adam/Development/pharoh/.ushabti/docs/index.md
+
+  - id: S003
+    title: Fix structured logging violation in banner
+    implemented: true
+    reviewed: true
+    notes: "Changed banner log message from template string to static message. Version now appears only in structured context object, satisfying structured logging requirements."
+    touched:
+      - /Users/adam/Development/pharoh/src/index.ts
+
+  - id: S004
+    title: Reconcile documentation after S003 fix
+    implemented: true
+    reviewed: true
+    notes: "Updated documentation example in index.md line 191 to show static log message 'Pharaoh starting' instead of template string. Version now correctly appears only in structured context."
+    touched:
+      - /Users/adam/Development/pharoh/.ushabti/docs/index.md
+
+  - id: S005
+    title: Add tests for version reading logic
+    implemented: true
+    reviewed: true
+    notes: "Installed vitest and set up testing infrastructure. Extracted version reading to a testable helper function readVersion() that uses dependency injection. Created comprehensive tests covering all conditional paths: valid package.json with version, missing file, malformed JSON, missing version field, and empty version string. All tests use FakeFilesystem to avoid real filesystem access per L08. Tests are deterministic and independent per L10. All 7 tests pass."
+    touched:
+      - /Users/adam/Development/pharoh/package.json
+      - /Users/adam/Development/pharoh/vitest.config.ts
+      - /Users/adam/Development/pharoh/src/index.ts
+      - /Users/adam/Development/pharoh/tests/index.test.ts
+      - /Users/adam/Development/pharoh/.ushabti/docs/index.md

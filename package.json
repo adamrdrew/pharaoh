@@ -9,7 +9,9 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "serve": "tsx src/index.ts serve"
+    "serve": "tsx src/index.ts serve",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.2.37",
@@ -19,7 +21,8 @@
   "devDependencies": {
     "@types/node": "22.10.7",
     "tsx": "4.19.2",
-    "typescript": "5.7.3"
+    "typescript": "5.7.3",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=20.0.0"
