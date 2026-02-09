@@ -1,34 +1,23 @@
 # Pharaoh
 
-A headless job runner for the [Ushabti](https://github.com/anthropics/ushabti) development framework, built on the [Claude Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/sdk).
+A headless job runner for the [Ushabti](https://github.com/adamrdrew/ushabti) development framework, built on the [Claude Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/sdk).
 
 Pharaoh watches a dispatch directory for markdown files, feeds them through the Ushabti Scribe-Builder-Overseer loop via the Agent SDK, manages git branching and pull requests, and reports status through a JSON file on disk. It runs unattended -- no terminal, no human in the loop.
 
 ## Prerequisites
 
 - Node.js 20 or later
-- [Ushabti](https://github.com/anthropics/ushabti) installed as a local npm dependency (see `package.json`)
 - An Anthropic API key set in the environment (`ANTHROPIC_API_KEY`)
+- A project with [Ushabti](https://github.com/adamrdrew/ushabti) configured (`.ushabti/` directory with `laws.md`, `style.md`, etc.)
 - Git (optional, for automated branching and PRs)
 - [GitHub CLI (`gh`)](https://cli.github.com/) (optional, for automated pull request creation)
 
-## Installation
-
-```bash
-git clone <repo-url> pharaoh
-cd pharaoh
-npm install
-npm run build
-```
-
 ## Quick start
 
-```bash
-# Start the server in the current directory
-npm run serve
+From your project directory (the one with `.ushabti/`):
 
-# Or run the compiled binary directly
-pharaoh serve
+```bash
+npx @adamrdrew/pharaoh serve
 ```
 
 Pharaoh will:
@@ -58,7 +47,7 @@ Pharaoh picks up the file, deletes it, executes the Ushabti loop, and writes the
 ### Starting the server
 
 ```bash
-pharaoh serve [--model <model>]
+npx @adamrdrew/pharaoh serve [--model <model>]
 ```
 
 | Flag | Default | Description |
@@ -265,13 +254,19 @@ After the main SDK query finishes, Pharaoh runs a second, lightweight query usin
 
 ## Development
 
+To work on Pharaoh itself:
+
 ```bash
+git clone git@github.com:adamrdrew/pharaoh.git
+cd pharaoh
+npm install
 npm run build        # TypeScript compilation
 npm run typecheck    # Type-check without emitting
 npm test             # Run all tests
 npm run test:watch   # Run tests in watch mode
+npm run serve        # Run from source via tsx
 ```
 
 ## License
 
-See [LICENSE](LICENSE) for details.
+MIT
