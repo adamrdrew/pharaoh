@@ -9,6 +9,8 @@ export function buildBusyStatus(input) {
         started: input.started,
         phase: input.phase,
         phaseStarted: input.phaseStarted,
+        turnsElapsed: input.turnsElapsed,
+        runningCostUsd: input.runningCostUsd,
     };
 }
 export function buildDoneStatus(input) {

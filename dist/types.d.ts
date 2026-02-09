@@ -14,6 +14,14 @@ export interface ServiceStatusBusy {
     readonly started: string;
     readonly phase: string;
     readonly phaseStarted: string;
+    /**
+     * Number of assistant messages (turns) elapsed during execution
+     */
+    readonly turnsElapsed: number;
+    /**
+     * Running cost in USD accumulated from token usage (heuristic based on Opus 4 pricing)
+     */
+    readonly runningCostUsd: number;
 }
 export interface ServiceStatusDone {
     readonly status: 'done';

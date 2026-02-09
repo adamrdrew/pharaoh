@@ -13,7 +13,8 @@ A filesystem-based job runner built on the Claude Agent SDK. Pharaoh watches a d
 - [How to Run](#how-to-run)
 - [Dispatch File Format](#dispatch-file-format)
 - [Status File Schema](#status-file-schema)
-- [Service Log](#service-log)
+- [Event Stream](#event-stream)
+- [Pharaoh Log](#pharaoh-log)
 - [Git Integration](#git-integration)
 - [Architecture](#architecture)
 
@@ -131,7 +132,7 @@ Server is ready to accept dispatch files.
 
 ### Busy
 
-Server is executing a phase.
+Server is executing a phase. The `turnsElapsed` and `runningCostUsd` fields provide real-time progress during execution.
 
 ```json
 {
@@ -139,9 +140,17 @@ Server is executing a phase.
   "pid": 12345,
   "started": "2026-02-09T15:00:00.000Z",
   "phase": "my-phase",
-  "phaseStarted": "2026-02-09T15:01:00.000Z"
+  "phaseStarted": "2026-02-09T15:01:00.000Z",
+  "turnsElapsed": 5,
+  "runningCostUsd": 0.12
 }
 ```
+
+**Fields:**
+- `turnsElapsed`: Number of assistant messages (turns) processed so far
+- `runningCostUsd`: Accumulated cost in USD based on token usage (heuristic using Opus 4 pricing: $15/MTok input, $75/MTok output)
+
+**Note:** The `runningCostUsd` is a real-time estimate. The final `costUsd` in the `done` or `blocked` status is the authoritative cost from the SDK.
 
 ### Done
 
@@ -184,6 +193,98 @@ Phase failed or encountered an error.
 idle → busy → done → idle
        ↓      ↓
        → blocked → idle
+```
+
+## Event Stream
+
+Pharaoh captures detailed SDK message events during phase execution and writes them to `.pharaoh/events.jsonl` in JSON Lines format.
+
+### Format
+
+Events are written as newline-delimited JSON objects (JSON Lines):
+
+```
+{"timestamp":"2026-02-09T15:01:00.123Z","type":"turn","summary":"Turn 1","detail":{"turn":1,"input_tokens":1234,"output_tokens":567}}
+{"timestamp":"2026-02-09T15:01:05.456Z","type":"tool_call","summary":"Tool: Read","detail":{"tool_use_id":"toolu_abc123","tool_name":"Read","input":"{\"file_path\":\"/path/to/file.ts\"}"}}
+```
+
+### Event Schema
+
+Each event has the following fields:
+
+- `timestamp` (string, required): ISO8601 timestamp when the event was captured
+- `type` (string, required): Event type discriminator (see Event Types table)
+- `summary` (string, required): Human-readable event summary (truncated for brevity)
+- `agent` (string, optional): Agent name (e.g., "Scribe", "Builder", "Overseer") — currently unpopulated, reserved for future use
+- `detail` (object, optional): Structured detail object with event-specific fields
+
+### Event Types
+
+| Type | Description | Detail Fields |
+|------|-------------|---------------|
+| `tool_call` | Tool invocation by assistant | `tool_use_id`, `tool_name`, `input` (truncated to 500 chars) |
+| `tool_progress` | Tool execution progress update | `tool_use_id`, `elapsed_millis` |
+| `tool_summary` | Tool execution completion | `tool_use_ids`, summary text |
+| `text` | Text output from assistant | `full_text` (summary truncated to 200 chars) |
+| `turn` | Assistant message (conversation turn) | `turn`, `input_tokens`, `output_tokens` |
+| `status` | SDK status update or initialization | `status`, `model`, `tools_count`, `plugins_count` |
+| `result` | Phase completion | `turns`, `cost_usd` |
+| `error` | Phase failure | `errors`, `turns`, `cost_usd` |
+
+### Event Lifecycle
+
+- **Cleared on phase start**: Events file is truncated when a new phase begins
+- **Append-only during execution**: Events are written as they arrive from the SDK
+- **No rotation or size limits**: Long phases may produce large event files
+- **File-based polling**: External consumers (like Hieroglyphs) poll the file for updates
+
+### Truncation and Debouncing
+
+- **Tool inputs**: Truncated to 500 characters in the `detail.input` field
+- **Text blocks**: Summary truncated to 200 characters; full text in `detail.full_text`
+- **Tool progress**: Debounced to maximum once per 5 seconds per tool to reduce I/O overhead
+
+### Example Events
+
+**Turn event:**
+```json
+{
+  "timestamp": "2026-02-09T15:01:00.123Z",
+  "type": "turn",
+  "summary": "Turn 1",
+  "detail": {
+    "turn": 1,
+    "input_tokens": 1234,
+    "output_tokens": 567
+  }
+}
+```
+
+**Tool call event:**
+```json
+{
+  "timestamp": "2026-02-09T15:01:05.456Z",
+  "type": "tool_call",
+  "summary": "Tool: Read",
+  "detail": {
+    "tool_use_id": "toolu_abc123",
+    "tool_name": "Read",
+    "input": "{\"file_path\":\"/path/to/file.ts\"}"
+  }
+}
+```
+
+**Result event:**
+```json
+{
+  "timestamp": "2026-02-09T15:05:00.789Z",
+  "type": "result",
+  "summary": "Phase complete: 12 turns, $0.45",
+  "detail": {
+    "turns": 12,
+    "cost_usd": 0.45
+  }
+}
 ```
 
 ## Pharaoh Log

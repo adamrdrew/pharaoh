@@ -1,9 +1,12 @@
 // SDK query runner for executing phases via ir-kat skill
 import { createQuery } from './runner-query.js';
-import { handleResultMessage, handleAssistantMessage, handleSystemMessage } from './runner-messages.js';
 import { buildNoResultError } from './runner-results.js';
 import { resolvePluginPath } from './plugin-resolver.js';
 import { verifyPhaseCompletion } from './runner-verification.js';
+import { ProgressDebouncer } from './event-debouncer.js';
+import { StatusThrottler } from './status-throttler.js';
+import { updateState } from './runner-state.js';
+import { handleMessage } from './runner-routing.js';
 /**
  * Executes phases via the Claude Agent SDK
  */
@@ -11,12 +14,18 @@ export class PhaseRunner {
     logger;
     status;
     config;
+    eventWriter;
     pluginPath;
-    constructor(logger, status, config) {
+    progressDebouncer;
+    statusThrottler;
+    constructor(logger, status, config, eventWriter) {
         this.logger = logger;
         this.status = status;
         this.config = config;
+        this.eventWriter = eventWriter;
         this.pluginPath = resolvePluginPath();
+        this.progressDebouncer = new ProgressDebouncer(5000);
+        this.statusThrottler = new StatusThrottler(5000);
     }
     async runPhase(pid, started, phasePrompt, phaseName) {
         const name = phaseName ?? 'unnamed-phase';
@@ -24,54 +33,39 @@ export class PhaseRunner {
         const startTime = Date.now();
         await this.initializePhase(pid, started, name, phaseStarted);
         const q = createQuery(this.config, this.pluginPath, this.logger, phasePrompt, name);
-        const sdkResult = await this.processQueryMessages(q, name, startTime);
+        const context = { pid, started, phase: name, phaseStarted };
+        const sdkResult = await this.processQueryMessages(q, name, startTime, context);
         return verifyPhaseCompletion(sdkResult, name, this.config.cwd, this.pluginPath, this.logger);
     }
     async initializePhase(pid, started, phaseName, phaseStarted) {
+        await this.eventWriter.clear();
         await this.logger.info('Starting phase execution', { phase: phaseName });
-        await this.status.setBusy({ pid, started, phase: phaseName, phaseStarted });
+        await this.status.setBusy({ pid, started, phase: phaseName, phaseStarted, turnsElapsed: 0, runningCostUsd: 0 });
     }
-    async processQueryMessages(q, phaseName, startTime) {
-        const state = { turns: 0, costUsd: 0, messageCounter: 0 };
+    async processQueryMessages(q, phaseName, startTime, context) {
+        const state = { turns: 0, costUsd: 0, messageCounter: 0, inputTokens: 0, outputTokens: 0, turnsElapsed: 0, runningCostUsd: 0 };
         for await (const message of q) {
-            const result = await this.processMessage(message, phaseName, startTime, state);
+            const result = await this.processMessage(message, phaseName, startTime, state, context);
             if (result)
                 return result;
         }
         return buildNoResultError(this.logger, phaseName, state.costUsd, state.turns, Date.now() - startTime);
     }
-    async processMessage(message, phaseName, startTime, state) {
-        const result = await this.handleMessage(message, phaseName, startTime, state.messageCounter);
+    async processMessage(message, phaseName, startTime, state, context) {
+        const result = await handleMessage(message, phaseName, startTime, state.messageCounter, this.logger, this.eventWriter, this.progressDebouncer);
         if (result)
             return result;
-        this.updateState(message, state);
+        updateState(message, state);
+        await this.updateStatusIfNeeded(state, context);
         return null;
     }
-    updateState(message, state) {
-        const msg = message;
-        if (msg.type === 'assistant')
-            state.messageCounter++;
-        if (msg.type === 'result')
-            this.updateResultMetrics(msg, state);
-    }
-    updateResultMetrics(msg, state) {
-        if (msg.num_turns !== undefined && msg.total_cost_usd !== undefined) {
-            state.turns = msg.num_turns;
-            state.costUsd = msg.total_cost_usd;
+    async updateStatusIfNeeded(state, context) {
+        if (this.statusThrottler.shouldWrite()) {
+            await this.updateStatusWithMetrics(state, context);
         }
     }
-    async handleMessage(message, phaseName, startTime, messageCounter) {
-        const msg = message;
-        if (msg.type === 'result')
-            return handleResultMessage(msg, this.logger, phaseName, startTime);
-        await this.handleNonResultMessage(msg, phaseName, messageCounter);
-        return null;
-    }
-    async handleNonResultMessage(msg, phaseName, messageCounter) {
-        if (msg.type === 'assistant')
-            await handleAssistantMessage(this.logger, phaseName, messageCounter + 1);
-        if (msg.type === 'system' && msg.subtype === 'status' && typeof msg.status === 'string')
-            await handleSystemMessage(this.logger, phaseName, msg.status);
+    async updateStatusWithMetrics(state, context) {
+        await this.status.setBusy({ ...context, turnsElapsed: state.turnsElapsed, runningCostUsd: state.runningCostUsd });
     }
 }
 //# sourceMappingURL=runner.js.map

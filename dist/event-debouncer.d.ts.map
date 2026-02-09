@@ -1,0 +1,1 @@
+{"version":3,"file":"event-debouncer.d.ts","sourceRoot":"","sources":["../src/event-debouncer.ts"],"names":[],"mappings":"AAEA;;GAEG;AACH,qBAAa,iBAAiB;IAC5B,OAAO,CAAC,QAAQ,CAAC,aAAa,CAAkC;IAChE,OAAO,CAAC,QAAQ,CAAC,UAAU,CAAS;gBAExB,UAAU,GAAE,MAAa;IAIrC,WAAW,CAAC,SAAS,EAAE,MAAM,GAAG,OAAO;IAMvC,OAAO,CAAC,WAAW;IAMnB,OAAO,CAAC,WAAW;IAInB,WAAW,CAAC,SAAS,EAAE,MAAM,GAAG,IAAI;CAGrC"}
