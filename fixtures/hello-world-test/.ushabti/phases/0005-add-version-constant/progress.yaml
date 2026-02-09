@@ -1,0 +1,29 @@
+phase:
+  id: 0005
+  slug: add-version-constant
+  title: Add Version Constant
+  status: complete
+
+steps:
+  - id: S001
+    title: Add VERSION constant
+    implemented: true
+    reviewed: true
+    notes: "Added VERSION constant at top of src/index.ts with value \"0.1.0\""
+    touched:
+      - src/index.ts
+
+  - id: S002
+    title: Print version as first output line
+    implemented: true
+    reviewed: true
+    notes: "Added console.log for version as first output line; verified output order is correct"
+    touched:
+      - src/index.ts
+
+  - id: S003
+    title: Verify build and output
+    implemented: true
+    reviewed: true
+    notes: "Build succeeds; output verified in correct order (version, timestamp, greet, farewell)"
+    touched: []

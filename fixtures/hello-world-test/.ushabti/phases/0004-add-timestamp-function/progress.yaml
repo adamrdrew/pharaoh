@@ -1,0 +1,29 @@
+phase:
+  id: "0004"
+  slug: add-timestamp-function
+  title: Add Timestamp Function
+  status: complete
+
+steps:
+  - id: S001
+    title: Add timestamp function
+    implemented: true
+    reviewed: true
+    notes: "Added timestamp(): string function that returns new Date().toISOString()"
+    touched:
+      - src/index.ts
+
+  - id: S002
+    title: Call timestamp before greetings
+    implemented: true
+    reviewed: true
+    notes: "Added console.log(timestamp()) call before greet() to print timestamp first"
+    touched:
+      - src/index.ts
+
+  - id: S003
+    title: Verify complete output sequence
+    implemented: true
+    reviewed: true
+    notes: "Verified output sequence: timestamp (2026-02-09T19:32:50.733Z), greeting, farewell. Build succeeds, runtime produces correct output."
+    touched: []

@@ -13,34 +13,43 @@ export async function checkPhaseStatus(
   logger: Logger
 ): Promise<StatusCheckResult> {
   try {
-    const result = await executeStatusQuery(cwd, pluginPath);
+    const result = await executeStatusQuery(cwd, pluginPath, logger);
     const status = extractPhaseStatus(result);
+    await logger.debug('Status check raw output', { outputLength: result.length, outputPreview: result.slice(0, 500), parsedStatus: status });
     return { ok: true, status };
   } catch (err) {
     return buildErrorResult(logger, err);
   }
 }
 
-async function executeStatusQuery(cwd: string, pluginPath: string): Promise<string> {
+async function executeStatusQuery(cwd: string, pluginPath: string, logger: Logger): Promise<string> {
   let output = '';
-  const q = query({ prompt: '/phase-status latest', options: buildQueryOptions(cwd, pluginPath) });
+  const q = query({ prompt: 'Run /phase-status latest — output only the PHASE_STATUS block, nothing else.', options: buildQueryOptions(cwd, pluginPath) });
   for await (const message of q) {
-    output += extractMessageContent(message);
+    const msg = message as { type?: string };
+    const extracted = extractMessageContent(message);
+    if (extracted.length > 0) await logger.debug('Status check content extracted', { type: msg.type, length: extracted.length });
+    if (msg.type === 'assistant' && extracted.length === 0) await logger.debug('Status check assistant message had no text content', { messageKeys: Object.keys(message as Record<string, unknown>) });
+    output += extracted;
   }
   return output;
 }
 
 function buildQueryOptions(cwd: string, pluginPath: string): Record<string, unknown> {
-  return { cwd, model: 'claude-sonnet-4-20250514', plugins: [{ type: 'local', path: pluginPath }], settingSources: ['project'], maxTurns: 5, persistSession: false };
+  return { cwd, model: 'claude-sonnet-4-20250514', plugins: [{ type: 'local', path: pluginPath }], settingSources: ['project'], maxTurns: 10, persistSession: false };
 }
 
 function extractMessageContent(message: unknown): string {
-  const msg = message as { type?: string; content?: string };
-  return msg.type === 'assistant' && typeof msg.content === 'string' ? msg.content : '';
+  const msg = message as { type?: string; message?: { content?: Array<{ type?: string; text?: string }> } };
+  if (msg.type !== 'assistant' || !Array.isArray(msg.message?.content)) return '';
+  return msg.message.content
+    .filter((b): b is { type: string; text: string } => b.type === 'text' && typeof b.text === 'string')
+    .map(b => b.text)
+    .join('');
 }
 
 function extractPhaseStatus(output: string): string {
-  const statusMatch = output.match(/"status":\s*"([^"]+)"/);
+  const statusMatch = output.match(/^\s*status:\s*(\S+)/m);
   return statusMatch?.[1] ?? 'unknown';
 }
 
