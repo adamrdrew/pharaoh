@@ -31,5 +31,12 @@ export class RealFilesystem {
             return false;
         }
     }
+    async readdir(path) {
+        return fs.readdir(path);
+    }
+    async stat(path) {
+        const stats = await fs.stat(path);
+        return { isDirectory: () => stats.isDirectory(), mtimeMs: stats.mtimeMs };
+    }
 }
 //# sourceMappingURL=filesystem.js.map

@@ -1,7 +1,7 @@
 // Real filesystem implementation for production
 
 import { promises as fs } from 'fs';
-import type { Filesystem } from './status.js';
+import type { Filesystem, FilesystemStats } from './status.js';
 
 /**
  * Real filesystem implementation using Node's fs promises API
@@ -38,5 +38,14 @@ export class RealFilesystem implements Filesystem {
     } catch {
       return false;
     }
+  }
+
+  async readdir(path: string): Promise<string[]> {
+    return fs.readdir(path);
+  }
+
+  async stat(path: string): Promise<FilesystemStats> {
+    const stats = await fs.stat(path);
+    return { isDirectory: () => stats.isDirectory(), mtimeMs: stats.mtimeMs };
   }
 }

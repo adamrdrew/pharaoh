@@ -1,7 +1,7 @@
 // Phase completion verification logic
 import { checkPhaseStatus } from './status-check.js';
-export async function verifyPhaseCompletion(sdkResult, phaseName, cwd, pluginPath, logger) {
-    const statusCheck = await checkPhaseStatus(cwd, pluginPath, logger);
+export async function verifyPhaseCompletion(sdkResult, phaseName, cwd, filesystem, logger) {
+    const statusCheck = await checkPhaseStatus(cwd, filesystem, logger);
     await logVerificationOutcome(sdkResult, statusCheck, phaseName, logger);
     return interpretPhaseStatus(sdkResult, statusCheck);
 }

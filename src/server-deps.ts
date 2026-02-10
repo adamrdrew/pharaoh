@@ -50,5 +50,5 @@ function createGitOperations(): GitOperations {
 
 function createPhaseRunner(fs: Filesystem, core: { logger: Logger; status: StatusManager }, paths: ServerPaths, config: ServerConfig): PhaseRunner {
   const eventWriter = new EventWriter(fs, paths.eventsPath);
-  return new PhaseRunner(core.logger, core.status, { cwd: paths.cwd, model: config.model ?? 'claude-opus-4-20250514' }, eventWriter);
+  return new PhaseRunner(core.logger, core.status, { cwd: paths.cwd, model: config.model ?? 'claude-opus-4-20250514' }, eventWriter, fs);
 }

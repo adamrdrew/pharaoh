@@ -2,7 +2,7 @@
 
 import type { PhaseResult } from './types.js';
 import type { Logger } from './log.js';
-import type { StatusManager } from './status.js';
+import type { StatusManager, Filesystem } from './status.js';
 import type { EventWriter } from './event-writer.js';
 import { createQuery } from './runner-query.js';
 import { buildNoResultError } from './runner-results.js';
@@ -33,7 +33,8 @@ export class PhaseRunner {
     private readonly logger: Logger,
     private readonly status: StatusManager,
     private readonly config: RunnerConfig,
-    private readonly eventWriter: EventWriter
+    private readonly eventWriter: EventWriter,
+    private readonly filesystem: Filesystem
   ) {
     this.pluginPath = resolvePluginPath();
     this.progressDebouncer = new ProgressDebouncer(5000);
@@ -53,7 +54,7 @@ export class PhaseRunner {
     const q = createQuery(this.config, this.pluginPath, this.logger, phasePrompt, name);
     const context = { pid, started, phase: name, phaseStarted };
     const sdkResult = await this.processQueryMessages(q, name, startTime, context);
-    return verifyPhaseCompletion(sdkResult, name, this.config.cwd, this.pluginPath, this.logger);
+    return verifyPhaseCompletion(sdkResult, name, this.config.cwd, this.filesystem, this.logger);
   }
 
   private async initializePhase(

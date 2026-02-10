@@ -1,7 +1,10 @@
-// Phase status verification via SDK query
+// Phase status verification via direct filesystem read
 
-import { query } from '@anthropic-ai/claude-agent-sdk';
+import { join } from 'path';
 import type { Logger } from './log.js';
+import type { Filesystem } from './status.js';
+import { findLatestPhaseDir } from './status-check-finder.js';
+import { parsePhaseStatus } from './status-check-parser.js';
 
 export type StatusCheckResult =
   | { ok: true; status: string }
@@ -9,48 +12,18 @@ export type StatusCheckResult =
 
 export async function checkPhaseStatus(
   cwd: string,
-  pluginPath: string,
+  fs: Filesystem,
   logger: Logger
 ): Promise<StatusCheckResult> {
   try {
-    const result = await executeStatusQuery(cwd, pluginPath, logger);
-    const status = extractPhaseStatus(result);
-    await logger.debug('Status check raw output', { outputLength: result.length, outputPreview: result.slice(0, 500), parsedStatus: status });
-    return { ok: true, status };
+    const dirResult = await findLatestPhaseDir(cwd, fs);
+    if (!dirResult.ok) return dirResult;
+    const progressPath = join(dirResult.status, 'progress.yaml');
+    const yamlContent = await fs.readFile(progressPath);
+    return parsePhaseStatus(yamlContent);
   } catch (err) {
     return buildErrorResult(logger, err);
   }
-}
-
-async function executeStatusQuery(cwd: string, pluginPath: string, logger: Logger): Promise<string> {
-  let output = '';
-  const q = query({ prompt: 'Run /phase-status latest — output only the PHASE_STATUS block, nothing else.', options: buildQueryOptions(cwd, pluginPath) });
-  for await (const message of q) {
-    const msg = message as { type?: string };
-    const extracted = extractMessageContent(message);
-    if (extracted.length > 0) await logger.debug('Status check content extracted', { type: msg.type, length: extracted.length });
-    if (msg.type === 'assistant' && extracted.length === 0) await logger.debug('Status check assistant message had no text content', { messageKeys: Object.keys(message as Record<string, unknown>) });
-    output += extracted;
-  }
-  return output;
-}
-
-function buildQueryOptions(cwd: string, pluginPath: string): Record<string, unknown> {
-  return { cwd, model: 'claude-sonnet-4-20250514', plugins: [{ type: 'local', path: pluginPath }], settingSources: ['project'], maxTurns: 10, persistSession: false };
-}
-
-function extractMessageContent(message: unknown): string {
-  const msg = message as { type?: string; message?: { content?: Array<{ type?: string; text?: string }> } };
-  if (msg.type !== 'assistant' || !Array.isArray(msg.message?.content)) return '';
-  return msg.message.content
-    .filter((b): b is { type: string; text: string } => b.type === 'text' && typeof b.text === 'string')
-    .map(b => b.text)
-    .join('');
-}
-
-function extractPhaseStatus(output: string): string {
-  const statusMatch = output.match(/^\s*status:\s*(\S+)/m);
-  return statusMatch?.[1] ?? 'unknown';
 }
 
 async function buildErrorResult(logger: Logger, err: unknown): Promise<StatusCheckResult> {

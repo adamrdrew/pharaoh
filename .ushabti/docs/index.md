@@ -377,12 +377,12 @@ Pharaoh invokes the Claude Agent SDK with:
 - **Plugin**: Ushabti plugin resolved from `node_modules` via npm dependency
 - **Model**: Configurable via `--model` flag (defaults to `claude-opus-4-20250514`)
 - **Permissions**: Bypass mode with sandbox enabled
-- **Max turns**: 200 for main phase execution, 5 for status verification
+- **Max turns**: 200 for main phase execution
 - **Hooks**: `PreToolUse` blocks `AskUserQuestion` with message "Proceed with your best judgement"
 
 ### Phase Status Verification
 
-After the main SDK query completes, Pharaoh performs a lightweight verification query using `/phase-status latest` to ensure the ir-kat loop reached a terminal state. If the phase status is `building`, `planned`, or any incomplete state, the result is reported as blocked even if the SDK query succeeded. This prevents false positives when the agent loop exits early.
+After the main SDK query completes, Pharaoh verifies that the ir-kat loop reached a terminal state by reading the phase status directly from the filesystem. It scans `.ushabti/phases/` to find the most recently modified phase directory, reads `progress.yaml` from that directory, and extracts the `status` field. If the status is not `complete`, `reviewing`, or `done`, the result is reported as blocked even if the SDK query succeeded. This prevents false positives when the agent loop exits early and eliminates the parsing failures that occurred with the previous agent-based verification approach.
 
 ## Future Work
 

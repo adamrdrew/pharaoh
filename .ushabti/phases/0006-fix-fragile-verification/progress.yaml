@@ -1,0 +1,89 @@
+phase:
+  id: "0006"
+  slug: fix-fragile-verification
+  title: "Fix Fragile Phase Verification"
+  status: complete
+
+steps:
+  - id: S001
+    title: Add js-yaml dependency
+    implemented: true
+    reviewed: true
+    notes: "Added js-yaml 4.1.0 to dependencies and @types/js-yaml 4.0.9 to devDependencies. npm install succeeded and build verified."
+    touched:
+      - package.json
+      - package-lock.json
+
+  - id: S002
+    title: Create phase directory finder
+    implemented: true
+    reviewed: true
+    notes: "Created status-check-finder.ts with findLatestPhaseDir function. Extended Filesystem interface with readdir and stat methods. Updated RealFilesystem implementation. Module under 100 lines, explicit return types, no any types."
+    touched:
+      - src/status-check-finder.ts
+      - src/status.ts
+      - src/filesystem.ts
+
+  - id: S003
+    title: Create YAML parser with validation
+    implemented: true
+    reviewed: true
+    notes: "Created status-check-parser.ts with parsePhaseStatus function. Uses js-yaml to parse content. Runtime validation with type guards checks for phase.status field. Returns typed errors on parsing or validation failures. No type assertions without validation (L03)."
+    touched:
+      - src/status-check-parser.ts
+
+  - id: S004
+    title: Rewrite status-check.ts to use filesystem
+    implemented: true
+    reviewed: true
+    notes: "Removed SDK query import and agent-based functions. Replaced with filesystem-based implementation using findLatestPhaseDir and parsePhaseStatus. Signature changed to accept Filesystem instead of pluginPath. Module now 27 lines (was 60)."
+    touched:
+      - src/status-check.ts
+
+  - id: S005
+    title: Update runner-verification.ts signature
+    implemented: true
+    reviewed: true
+    notes: "Changed verifyPhaseCompletion signature to accept filesystem: Filesystem instead of pluginPath: string. Updated call to checkPhaseStatus to pass filesystem parameter. Added Filesystem type import."
+    touched:
+      - src/runner-verification.ts
+
+  - id: S006
+    title: Update runner.ts call site
+    implemented: true
+    reviewed: true
+    notes: "Added Filesystem parameter to PhaseRunner constructor. Updated verifyPhaseCompletion call to pass this.filesystem instead of this.pluginPath. Updated server-deps.ts to pass fs when creating PhaseRunner. Build succeeds with no TypeScript errors."
+    touched:
+      - src/runner.ts
+      - src/server-deps.ts
+
+  - id: S007
+    title: Update documentation
+    implemented: true
+    reviewed: true
+    notes: "Updated Phase Status Verification section in index.md to describe filesystem-based approach. Removed reference to /phase-status agent query. Updated SDK Configuration section to remove obsolete 'max turns for status verification' note. Documentation now accurately reflects implementation."
+    touched:
+      - .ushabti/docs/index.md
+
+  - id: S008
+    title: Verify build and existing tests
+    implemented: true
+    reviewed: true
+    notes: "npm run build succeeds with no TypeScript errors. npm test passes all 85 tests in 12 test files. No existing tests for status-check functionality found, so no test updates required."
+    touched: []
+
+  - id: S009
+    title: Eliminate type assertions in status-check-parser.ts
+    implemented: true
+    reviewed: true
+    notes: "Refactored isValidStructure() to use TypeScript's in operator for type narrowing instead of type assertions. Verified no type assertions remain (grep shows only import * as yaml). Build succeeds with no TypeScript errors. Behavior unchanged."
+    touched:
+      - src/status-check-parser.ts
+
+  - id: S010
+    title: Add comprehensive unit tests for status-check modules
+    implemented: true
+    reviewed: true
+    notes: "Created tests/status-check.test.ts with 18 test cases covering all three modules. Tests use FakeFilesystem (L08 compliant). Coverage includes: parsePhaseStatus (7 tests), findLatestPhaseDir (5 tests), checkPhaseStatus (6 tests). All error paths tested: invalid YAML, missing fields, wrong types, missing directories. All tests pass. Total test count increased from 85 to 103."
+    touched:
+      - tests/status-check.test.ts

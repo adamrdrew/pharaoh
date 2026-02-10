@@ -1,6 +1,10 @@
 import type { ServiceStatus } from './types.js';
 import { type ReadResult } from './status-reader.js';
 import type { SetIdleInput, SetBusyInput, SetDoneInput, SetBlockedInput } from './status-inputs.js';
+export interface FilesystemStats {
+    isDirectory(): boolean;
+    mtimeMs: number;
+}
 export interface Filesystem {
     readFile(path: string): Promise<string>;
     writeFile(path: string, content: string): Promise<void>;
@@ -11,6 +15,8 @@ export interface Filesystem {
     rename(oldPath: string, newPath: string): Promise<void>;
     unlink(path: string): Promise<void>;
     exists(path: string): Promise<boolean>;
+    readdir(path: string): Promise<string[]>;
+    stat(path: string): Promise<FilesystemStats>;
 }
 export type { ReadResult };
 export type { SetIdleInput, SetBusyInput, SetDoneInput, SetBlockedInput, } from './status-inputs.js';

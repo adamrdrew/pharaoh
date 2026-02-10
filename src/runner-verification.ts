@@ -2,16 +2,17 @@
 
 import type { PhaseResult } from './types.js';
 import type { Logger } from './log.js';
+import type { Filesystem } from './status.js';
 import { checkPhaseStatus } from './status-check.js';
 
 export async function verifyPhaseCompletion(
   sdkResult: PhaseResult,
   phaseName: string,
   cwd: string,
-  pluginPath: string,
+  filesystem: Filesystem,
   logger: Logger
 ): Promise<PhaseResult> {
-  const statusCheck = await checkPhaseStatus(cwd, pluginPath, logger);
+  const statusCheck = await checkPhaseStatus(cwd, filesystem, logger);
   await logVerificationOutcome(sdkResult, statusCheck, phaseName, logger);
   return interpretPhaseStatus(sdkResult, statusCheck);
 }

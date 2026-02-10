@@ -27,6 +27,6 @@ function createGitOperations() {
 }
 function createPhaseRunner(fs, core, paths, config) {
     const eventWriter = new EventWriter(fs, paths.eventsPath);
-    return new PhaseRunner(core.logger, core.status, { cwd: paths.cwd, model: config.model ?? 'claude-opus-4-20250514' }, eventWriter);
+    return new PhaseRunner(core.logger, core.status, { cwd: paths.cwd, model: config.model ?? 'claude-opus-4-20250514' }, eventWriter, fs);
 }
 //# sourceMappingURL=server-deps.js.map

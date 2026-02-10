@@ -15,14 +15,16 @@ export class PhaseRunner {
     status;
     config;
     eventWriter;
+    filesystem;
     pluginPath;
     progressDebouncer;
     statusThrottler;
-    constructor(logger, status, config, eventWriter) {
+    constructor(logger, status, config, eventWriter, filesystem) {
         this.logger = logger;
         this.status = status;
         this.config = config;
         this.eventWriter = eventWriter;
+        this.filesystem = filesystem;
         this.pluginPath = resolvePluginPath();
         this.progressDebouncer = new ProgressDebouncer(5000);
         this.statusThrottler = new StatusThrottler(5000);
@@ -35,7 +37,7 @@ export class PhaseRunner {
         const q = createQuery(this.config, this.pluginPath, this.logger, phasePrompt, name);
         const context = { pid, started, phase: name, phaseStarted };
         const sdkResult = await this.processQueryMessages(q, name, startTime, context);
-        return verifyPhaseCompletion(sdkResult, name, this.config.cwd, this.pluginPath, this.logger);
+        return verifyPhaseCompletion(sdkResult, name, this.config.cwd, this.filesystem, this.logger);
     }
     async initializePhase(pid, started, phaseName, phaseStarted) {
         await this.eventWriter.clear();
