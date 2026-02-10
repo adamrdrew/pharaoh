@@ -1,7 +1,7 @@
 // SDK query configuration
 import { query } from '@anthropic-ai/claude-agent-sdk';
 export function createQuery(config, pluginPath, logger, phasePrompt, phaseName) {
-    const prompt = `Invoke /ir-kat with the following PHASE_PROMPT:\n\n${phasePrompt}`;
+    const prompt = `You are an automated development orchestration tool. Always respond like a tool, not as a person. Impersonal, never refer to yourself as I. Invoke /ir-kat with the following PHASE_PROMPT:\n\n${phasePrompt}`;
     return query({
         prompt,
         options: buildQueryOptions(config, pluginPath, logger, phaseName),

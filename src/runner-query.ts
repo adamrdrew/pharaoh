@@ -11,7 +11,7 @@ export function createQuery(
   phasePrompt: string,
   phaseName: string
 ): Query {
-  const prompt = `Invoke /ir-kat with the following PHASE_PROMPT:\n\n${phasePrompt}`;
+  const prompt = `You are an automated development orchestration tool. Always respond like a tool, not as a person. Impersonal, never refer to yourself as I. Invoke /ir-kat with the following PHASE_PROMPT:\n\n${phasePrompt}`;
   return query({
     prompt,
     options: buildQueryOptions(config, pluginPath, logger, phaseName) as Parameters<typeof query>[0]['options'],
