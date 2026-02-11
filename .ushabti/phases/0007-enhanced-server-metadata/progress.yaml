@@ -1,0 +1,76 @@
+phase:
+  id: 0007
+  slug: enhanced-server-metadata
+  title: Enhanced Server Metadata
+  status: planned
+
+steps:
+  - id: S001
+    title: Add metadata fields to status type definitions
+    implemented: false
+    reviewed: false
+    notes: ""
+    touched: []
+
+  - id: S002
+    title: Extend status input types
+    implemented: false
+    reviewed: false
+    notes: ""
+    touched: []
+
+  - id: S003
+    title: Update status setter functions
+    implemented: false
+    reviewed: false
+    notes: ""
+    touched: []
+
+  - id: S004
+    title: Create version reader module
+    implemented: false
+    reviewed: false
+    notes: ""
+    touched: []
+
+  - id: S005
+    title: Add metadata to server initialization
+    implemented: false
+    reviewed: false
+    notes: ""
+    touched: []
+
+  - id: S006
+    title: Add phasesCompleted counter to DispatchWatcher
+    implemented: false
+    reviewed: false
+    notes: ""
+    touched: []
+
+  - id: S007
+    title: Capture git branch during phase execution
+    implemented: false
+    reviewed: false
+    notes: ""
+    touched: []
+
+  - id: S008
+    title: Thread metadata through all status writes
+    implemented: false
+    reviewed: false
+    notes: ""
+    touched: []
+
+  - id: S009
+    title: Update tests for new status fields
+    implemented: false
+    reviewed: false
+    notes: ""
+    touched: []
+
+  - id: S010
+    title: Update documentation
+    implemented: false
+    reviewed: false
+    notes: ""
+    touched: []
