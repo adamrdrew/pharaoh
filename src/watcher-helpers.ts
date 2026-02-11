@@ -11,7 +11,7 @@ export async function checkFileExists(ctx: ProcessContext, path: string): Promis
 
 async function handleMissingFile(ctx: ProcessContext, path: string): Promise<void> {
   await ctx.logger.warn('Dispatch file disappeared', { path });
-  await ctx.status.setIdle({ pid: ctx.pid, started: ctx.started });
+  await ctx.status.setIdle({ pid: ctx.pid, started: ctx.started, ...ctx.metadata, phasesCompleted: ctx.phasesCompleted });
 }
 
 export async function parseAndValidate(ctx: ProcessContext, path: string): Promise<{ ok: true; phase: string; body: string } | { ok: false }> {
@@ -24,7 +24,7 @@ export async function parseAndValidate(ctx: ProcessContext, path: string): Promi
 async function handleParseFailure(ctx: ProcessContext, path: string, error: string): Promise<{ ok: false }> {
   await ctx.logger.error('Failed to parse dispatch file', { path, error });
   await ctx.fs.unlink(path);
-  await ctx.status.setIdle({ pid: ctx.pid, started: ctx.started });
+  await ctx.status.setIdle({ pid: ctx.pid, started: ctx.started, ...ctx.metadata, phasesCompleted: ctx.phasesCompleted });
   return { ok: false };
 }
 
@@ -34,19 +34,19 @@ async function handleParseSuccess(ctx: ProcessContext, path: string, file: { pha
   return { ok: true, phase: file.phase ?? 'unnamed-phase', body: file.body };
 }
 
-export async function reportPhaseComplete(ctx: ProcessContext, phaseName: string, result: { ok: boolean; costUsd: number; turns: number; error?: string }): Promise<void> {
+export async function reportPhaseComplete(ctx: ProcessContext, phaseName: string, result: { ok: boolean; costUsd: number; turns: number; error?: string }, updatedCounter: number): Promise<void> {
   const timestamps = { phaseStarted: new Date().toISOString(), phaseCompleted: new Date().toISOString() };
-  if (result.ok) await reportSuccess(ctx, phaseName, result, timestamps);
-  else await reportFailure(ctx, phaseName, result, timestamps);
-  await ctx.status.setIdle({ pid: ctx.pid, started: ctx.started });
+  if (result.ok) await reportSuccess(ctx, phaseName, result, timestamps, updatedCounter);
+  else await reportFailure(ctx, phaseName, result, timestamps, updatedCounter);
+  await ctx.status.setIdle({ pid: ctx.pid, started: ctx.started, ...ctx.metadata, phasesCompleted: updatedCounter });
 }
 
-async function reportSuccess(ctx: ProcessContext, phaseName: string, result: { costUsd: number; turns: number }, timestamps: { phaseStarted: string; phaseCompleted: string }): Promise<void> {
-  await ctx.status.setDone({ pid: ctx.pid, started: ctx.started, phase: phaseName, ...timestamps, costUsd: result.costUsd, turns: result.turns });
+async function reportSuccess(ctx: ProcessContext, phaseName: string, result: { costUsd: number; turns: number }, timestamps: { phaseStarted: string; phaseCompleted: string }, phasesCompleted: number): Promise<void> {
+  await ctx.status.setDone({ pid: ctx.pid, started: ctx.started, phase: phaseName, ...timestamps, costUsd: result.costUsd, turns: result.turns, ...ctx.metadata, phasesCompleted });
   await ctx.logger.info('Phase done', { phase: phaseName });
 }
 
-async function reportFailure(ctx: ProcessContext, phaseName: string, result: { costUsd: number; turns: number; error?: string }, timestamps: { phaseStarted: string; phaseCompleted: string }): Promise<void> {
-  await ctx.status.setBlocked({ pid: ctx.pid, started: ctx.started, phase: phaseName, ...timestamps, error: result.error ?? 'Unknown error', costUsd: result.costUsd, turns: result.turns });
+async function reportFailure(ctx: ProcessContext, phaseName: string, result: { costUsd: number; turns: number; error?: string }, timestamps: { phaseStarted: string; phaseCompleted: string }, phasesCompleted: number): Promise<void> {
+  await ctx.status.setBlocked({ pid: ctx.pid, started: ctx.started, phase: phaseName, ...timestamps, error: result.error ?? 'Unknown error', costUsd: result.costUsd, turns: result.turns, ...ctx.metadata, phasesCompleted });
   await ctx.logger.error('Phase blocked', { phase: phaseName, error: result.error });
 }

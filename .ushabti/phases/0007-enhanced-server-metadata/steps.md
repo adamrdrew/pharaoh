@@ -121,3 +121,27 @@
 - Document that gitBranch is only present during busy status
 
 **Done when:** Documentation includes all six new fields in schema examples and explains their semantics.
+
+## S011: Fix counter increment timing
+
+**Intent:** Ensure done status reflects the incremented counter value, not the pre-increment value.
+
+**Work:**
+- Modify runAndReportPhase in watcher.ts to pass the updated counter value to reportPhaseComplete
+- Options: either build fresh context after incrementing, pass counter as parameter, or increment within reportPhaseComplete
+- Ensure done status writes with phasesCompleted reflecting the newly incremented value
+- Ensure subsequent idle status also uses the incremented value
+
+**Done when:** After a phase completes successfully, the done status shows phasesCompleted incremented by 1 from the previous value.
+
+## S012: Add integration test for counter increment
+
+**Intent:** Verify the full flow of counter increment through done status write.
+
+**Work:**
+- Add test simulating successful phase completion
+- Verify that done status contains phasesCompleted with incremented value
+- Verify that subsequent idle status also contains the incremented value
+- Cover the case of multiple sequential phase completions
+
+**Done when:** Test explicitly verifies done status reflects post-increment counter value, not pre-increment.

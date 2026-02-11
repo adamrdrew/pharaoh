@@ -6,6 +6,7 @@ import type { Logger } from './log.js';
 import type { StatusManager } from './status.js';
 import type { PhaseRunner } from './runner.js';
 import type { GitOperations } from './git.js';
+import type { ServerMetadata } from './server-deps.js';
 import { checkFileExists, parseAndValidate, reportPhaseComplete } from './watcher-helpers.js';
 import { createWatcher } from './watcher-setup.js';
 import type { ProcessContext } from './watcher-context.js';
@@ -16,6 +17,7 @@ export interface DispatchWatcherOptions {
   readonly dispatchPath: string;
   readonly pid: number;
   readonly started: string;
+  readonly metadata: ServerMetadata;
 }
 
 export interface DispatchWatcherDeps {
@@ -30,6 +32,7 @@ export class DispatchWatcher {
   private watcher: FSWatcher | null = null;
   private busy: boolean = false;
   private queue: string[] = [];
+  private phasesCompleted: number = 0;
   constructor(private readonly deps: DispatchWatcherDeps, private readonly options: DispatchWatcherOptions) {}
   async start(): Promise<void> {
     this.watcher = await createWatcher(this.options.dispatchPath, this.deps.logger, (path) => {
@@ -80,12 +83,15 @@ export class DispatchWatcher {
     return parseAndValidate(ctx, path);
   }
   private async runAndReportPhase(ctx: ProcessContext, parsed: { phase: string; body: string }): Promise<void> {
-    await prepareGitEnvironment(this.deps.git, this.deps.logger, parsed.phase);
-    const result = await this.deps.runner.runPhase(this.options.pid, this.options.started, parsed.body, parsed.phase);
-    if (result.ok) await finalizeGreenPhase(this.deps.git, this.deps.logger, parsed.phase);
-    await reportPhaseComplete(ctx, parsed.phase, result);
+    const gitBranch = await prepareGitEnvironment(this.deps.git, this.deps.logger, parsed.phase);
+    const result = await this.deps.runner.runPhase(this.options.pid, this.options.started, parsed.body, parsed.phase, gitBranch, this.options.metadata, this.phasesCompleted);
+    if (result.ok) {
+      await finalizeGreenPhase(this.deps.git, this.deps.logger, parsed.phase);
+      this.phasesCompleted += 1;
+    }
+    await reportPhaseComplete(ctx, parsed.phase, result, this.phasesCompleted);
   }
   private buildContext(): ProcessContext {
-    return { ...this.deps, pid: this.options.pid, started: this.options.started };
+    return { ...this.deps, pid: this.options.pid, started: this.options.started, metadata: this.options.metadata, phasesCompleted: this.phasesCompleted };
   }
 }

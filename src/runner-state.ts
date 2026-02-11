@@ -2,6 +2,7 @@
 
 import { calculateRunningCost } from './cost-calculator.js';
 import { isAssistantMessage, isResultMessage, type AssistantMessage, type ResultMessage } from './runner-guards.js';
+import type { ServerMetadata } from './server-deps.js';
 
 export interface RunnerState {
   turns: number;
@@ -18,6 +19,9 @@ export interface PhaseContext {
   readonly started: string;
   readonly phase: string;
   readonly phaseStarted: string;
+  readonly gitBranch: string | null;
+  readonly metadata: ServerMetadata;
+  readonly phasesCompleted: number;
 }
 
 export function updateState(message: unknown, state: RunnerState): void {

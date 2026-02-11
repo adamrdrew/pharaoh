@@ -7,10 +7,10 @@ export async function prepareGitEnvironment(
   git: GitOperations,
   logger: Logger,
   phaseName: string
-): Promise<void> {
+): Promise<string | null> {
   const isRepo = await checkIsGitRepo(git);
-  if (!isRepo) return;
-  await performGitPreChecks(git, logger, phaseName);
+  if (!isRepo) return null;
+  return performGitPreChecks(git, logger, phaseName);
 }
 
 async function checkIsGitRepo(git: GitOperations): Promise<boolean> {
@@ -18,13 +18,13 @@ async function checkIsGitRepo(git: GitOperations): Promise<boolean> {
   return result.ok && result.value;
 }
 
-async function performGitPreChecks(git: GitOperations, logger: Logger, phaseName: string): Promise<void> {
+async function performGitPreChecks(git: GitOperations, logger: Logger, phaseName: string): Promise<string | null> {
   const branchCheck = await verifyMainBranch(git, logger);
-  if (!branchCheck) return;
+  if (!branchCheck) return null;
   const cleanCheck = await verifyCleanWorkingTree(git, logger);
-  if (!cleanCheck) return;
+  if (!cleanCheck) return null;
   await pullLatestChanges(git, logger);
-  await createFeatureBranch(git, logger, phaseName);
+  return createFeatureBranch(git, logger, phaseName);
 }
 
 async function verifyMainBranch(git: GitOperations, logger: Logger): Promise<boolean> {
@@ -55,11 +55,12 @@ async function pullLatestChanges(git: GitOperations, logger: Logger): Promise<vo
   if (!result.ok) await logger.warn('Failed to pull latest changes', { error: result.error });
 }
 
-async function createFeatureBranch(git: GitOperations, logger: Logger, phaseName: string): Promise<void> {
+async function createFeatureBranch(git: GitOperations, logger: Logger, phaseName: string): Promise<string> {
   const branchName = `pharaoh/${slugify(phaseName)}`;
   const result = await git.createBranch(branchName);
   if (result.ok) await logger.info('Created feature branch', { branch: branchName });
   else await logger.warn('Failed to create feature branch', { branch: branchName, error: result.error });
+  return branchName;
 }
 
 function slugify(name: string): string {

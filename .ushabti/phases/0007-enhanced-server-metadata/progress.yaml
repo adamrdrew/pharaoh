@@ -2,75 +2,106 @@ phase:
   id: 0007
   slug: enhanced-server-metadata
   title: Enhanced Server Metadata
-  status: planned
+  status: complete
 
 steps:
   - id: S001
     title: Add metadata fields to status type definitions
-    implemented: false
-    reviewed: false
-    notes: ""
-    touched: []
+    implemented: true
+    reviewed: true
+    notes: Added five common metadata fields to all four status interfaces; gitBranch added only to ServiceStatusBusy
+    touched:
+      - src/types.ts
 
   - id: S002
     title: Extend status input types
-    implemented: false
-    reviewed: false
-    notes: ""
-    touched: []
+    implemented: true
+    reviewed: true
+    notes: Extended all four input types with appropriate metadata fields
+    touched:
+      - src/status-inputs.ts
 
   - id: S003
     title: Update status setter functions
-    implemented: false
-    reviewed: false
-    notes: ""
-    touched: []
+    implemented: true
+    reviewed: true
+    notes: "Updated all four builder functions to spread input fields, keeping each function under 5 lines"
+    touched:
+      - src/status-setters.ts
 
   - id: S004
     title: Create version reader module
-    implemented: false
-    reviewed: false
-    notes: ""
-    touched: []
+    implemented: true
+    reviewed: true
+    notes: Added readVersions function that reads both Pharaoh and Ushabti versions synchronously at startup
+    touched:
+      - src/version.ts
 
   - id: S005
     title: Add metadata to server initialization
-    implemented: false
-    reviewed: false
-    notes: ""
-    touched: []
+    implemented: true
+    reviewed: true
+    notes: "Read versions at startup, created ServerMetadata interface, pass metadata through to DispatchWatcher"
+    touched:
+      - src/server-deps.ts
 
   - id: S006
     title: Add phasesCompleted counter to DispatchWatcher
-    implemented: false
-    reviewed: false
-    notes: ""
-    touched: []
+    implemented: true
+    reviewed: true
+    notes: "Added phasesCompleted counter to DispatchWatcher, increments on successful phase completion, included in ProcessContext"
+    touched:
+      - src/watcher.ts
+      - src/watcher-context.ts
 
   - id: S007
     title: Capture git branch during phase execution
-    implemented: false
-    reviewed: false
-    notes: ""
-    touched: []
+    implemented: true
+    reviewed: true
+    notes: "Modified prepareGitEnvironment to return branch name, updated runner to accept and pass gitBranch in busy status"
+    touched:
+      - src/git-pre-phase.ts
+      - src/runner.ts
+      - src/runner-state.ts
+      - src/watcher.ts
 
   - id: S008
     title: Thread metadata through all status writes
-    implemented: false
-    reviewed: false
-    notes: ""
-    touched: []
+    implemented: true
+    reviewed: true
+    notes: Updated all status writes in watcher-helpers and server-startup to include metadata fields
+    touched:
+      - src/watcher-helpers.ts
+      - src/server-startup.ts
+      - src/server-deps.ts
 
   - id: S009
     title: Update tests for new status fields
-    implemented: false
-    reviewed: false
-    notes: ""
-    touched: []
+    implemented: true
+    reviewed: true
+    notes: Created comprehensive tests for status setters verifying all new fields and counter behavior
+    touched:
+      - tests/status-setters.test.ts
 
   - id: S010
     title: Update documentation
-    implemented: false
-    reviewed: false
-    notes: ""
-    touched: []
+    implemented: true
+    reviewed: true
+    notes: Updated documentation with new status schema including all six metadata fields and examples
+    touched:
+      - .ushabti/docs/index.md
+  - id: S011
+    title: Fix counter increment timing
+    implemented: true
+    reviewed: true
+    notes: Fixed counter increment timing by passing updated counter value to reportPhaseComplete
+    touched:
+      - src/watcher.ts
+      - src/watcher-helpers.ts
+  - id: S012
+    title: Add integration test for counter increment
+    implemented: true
+    reviewed: true
+    notes: Added integration tests verifying done status reflects post-increment counter value across multiple sequential completions
+    touched:
+      - tests/watcher-helpers.test.ts

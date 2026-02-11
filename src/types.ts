@@ -14,6 +14,11 @@ export interface ServiceStatusIdle {
   readonly status: 'idle';
   readonly pid: number;
   readonly started: string;
+  readonly pharaohVersion: string;
+  readonly ushabtiVersion: string;
+  readonly model: string;
+  readonly cwd: string;
+  readonly phasesCompleted: number;
 }
 
 export interface ServiceStatusBusy {
@@ -30,6 +35,12 @@ export interface ServiceStatusBusy {
    * Running cost in USD accumulated from token usage (heuristic based on Opus 4 pricing)
    */
   readonly runningCostUsd: number;
+  readonly pharaohVersion: string;
+  readonly ushabtiVersion: string;
+  readonly model: string;
+  readonly cwd: string;
+  readonly phasesCompleted: number;
+  readonly gitBranch: string;
 }
 
 export interface ServiceStatusDone {
@@ -41,6 +52,11 @@ export interface ServiceStatusDone {
   readonly phaseCompleted: string;
   readonly costUsd: number;
   readonly turns: number;
+  readonly pharaohVersion: string;
+  readonly ushabtiVersion: string;
+  readonly model: string;
+  readonly cwd: string;
+  readonly phasesCompleted: number;
 }
 
 export interface ServiceStatusBlocked {
@@ -53,6 +69,11 @@ export interface ServiceStatusBlocked {
   readonly error: string;
   readonly costUsd: number;
   readonly turns: number;
+  readonly pharaohVersion: string;
+  readonly ushabtiVersion: string;
+  readonly model: string;
+  readonly cwd: string;
+  readonly phasesCompleted: number;
 }
 
 /**

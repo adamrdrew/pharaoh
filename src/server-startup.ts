@@ -6,11 +6,11 @@ import { readVersion } from './version.js';
 import type { Logger } from './log.js';
 import type { StatusManager } from './status.js';
 import type { DispatchWatcher } from './watcher.js';
-import type { ServerPaths } from './server-deps.js';
+import type { ServerPaths, ServerMetadata } from './server-deps.js';
 
-export async function startServer(deps: { logger: Logger; status: StatusManager; watcher: DispatchWatcher }, paths: ServerPaths): Promise<void> {
+export async function startServer(deps: { logger: Logger; status: StatusManager; watcher: DispatchWatcher; metadata: ServerMetadata }, paths: ServerPaths): Promise<void> {
   await logServerStartup(deps, paths);
-  await initializeServerState(deps.status);
+  await initializeServerState(deps.status, deps.metadata);
   await launchWatcher(deps, paths);
 }
 
@@ -21,8 +21,8 @@ async function logServerStartup(deps: { logger: Logger; status: StatusManager; w
   await deps.logger.info('Pharaoh starting', { version, cwd: paths.cwd });
 }
 
-async function initializeServerState(status: StatusManager): Promise<void> {
-  await status.setIdle({ pid: process.pid, started: new Date().toISOString() });
+async function initializeServerState(status: StatusManager, metadata: ServerMetadata): Promise<void> {
+  await status.setIdle({ pid: process.pid, started: new Date().toISOString(), ...metadata, phasesCompleted: 0 });
 }
 
 async function launchWatcher(deps: { logger: Logger; watcher: DispatchWatcher }, paths: ServerPaths): Promise<void> {

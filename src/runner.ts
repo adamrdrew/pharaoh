@@ -45,14 +45,17 @@ export class PhaseRunner {
     pid: number,
     started: string,
     phasePrompt: string,
-    phaseName?: string
+    phaseName: string | undefined,
+    gitBranch: string | null,
+    metadata: { pharaohVersion: string; ushabtiVersion: string; model: string; cwd: string },
+    phasesCompleted: number
   ): Promise<PhaseResult> {
     const name = phaseName ?? 'unnamed-phase';
     const phaseStarted = new Date().toISOString();
     const startTime = Date.now();
-    await this.initializePhase(pid, started, name, phaseStarted);
+    await this.initializePhase(pid, started, name, phaseStarted, gitBranch, metadata, phasesCompleted);
     const q = createQuery(this.config, this.pluginPath, this.logger, phasePrompt, name);
-    const context = { pid, started, phase: name, phaseStarted };
+    const context = { pid, started, phase: name, phaseStarted, gitBranch, metadata, phasesCompleted };
     const sdkResult = await this.processQueryMessages(q, name, startTime, context);
     return verifyPhaseCompletion(sdkResult, name, this.config.cwd, this.filesystem, this.logger);
   }
@@ -61,11 +64,15 @@ export class PhaseRunner {
     pid: number,
     started: string,
     phaseName: string,
-    phaseStarted: string
+    phaseStarted: string,
+    gitBranch: string | null,
+    metadata: { pharaohVersion: string; ushabtiVersion: string; model: string; cwd: string },
+    phasesCompleted: number
   ): Promise<void> {
     await this.eventWriter.clear();
     await this.logger.info('Starting phase execution', { phase: phaseName });
-    await this.status.setBusy({ pid, started, phase: phaseName, phaseStarted, turnsElapsed: 0, runningCostUsd: 0 });
+    const busyInput = { pid, started, phase: phaseName, phaseStarted, turnsElapsed: 0, runningCostUsd: 0, ...metadata, gitBranch: gitBranch ?? '', phasesCompleted };
+    await this.status.setBusy(busyInput);
   }
 
   private async processQueryMessages(q: ReturnType<typeof createQuery>, phaseName: string, startTime: number, context: PhaseContext): Promise<PhaseResult> {
@@ -92,6 +99,7 @@ export class PhaseRunner {
   }
 
   private async updateStatusWithMetrics(state: RunnerState, context: PhaseContext): Promise<void> {
-    await this.status.setBusy({ ...context, turnsElapsed: state.turnsElapsed, runningCostUsd: state.runningCostUsd });
+    const { gitBranch, metadata, phasesCompleted, ...baseContext } = context;
+    await this.status.setBusy({ ...baseContext, turnsElapsed: state.turnsElapsed, runningCostUsd: state.runningCostUsd, ...metadata, gitBranch: gitBranch ?? '', phasesCompleted });
   }
 }

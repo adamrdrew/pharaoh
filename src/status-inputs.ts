@@ -3,6 +3,11 @@
 export interface SetIdleInput {
   readonly pid: number;
   readonly started: string;
+  readonly pharaohVersion: string;
+  readonly ushabtiVersion: string;
+  readonly model: string;
+  readonly cwd: string;
+  readonly phasesCompleted: number;
 }
 
 export interface SetBusyInput {
@@ -18,6 +23,12 @@ export interface SetBusyInput {
    * Running cost in USD accumulated from token usage (heuristic based on Opus 4 pricing)
    */
   readonly runningCostUsd: number;
+  readonly pharaohVersion: string;
+  readonly ushabtiVersion: string;
+  readonly model: string;
+  readonly cwd: string;
+  readonly phasesCompleted: number;
+  readonly gitBranch: string;
 }
 
 export interface SetDoneInput {
@@ -28,6 +39,11 @@ export interface SetDoneInput {
   readonly phaseCompleted: string;
   readonly costUsd: number;
   readonly turns: number;
+  readonly pharaohVersion: string;
+  readonly ushabtiVersion: string;
+  readonly model: string;
+  readonly cwd: string;
+  readonly phasesCompleted: number;
 }
 
 export interface SetBlockedInput {
@@ -39,4 +55,9 @@ export interface SetBlockedInput {
   readonly error: string;
   readonly costUsd: number;
   readonly turns: number;
+  readonly pharaohVersion: string;
+  readonly ushabtiVersion: string;
+  readonly model: string;
+  readonly cwd: string;
+  readonly phasesCompleted: number;
 }

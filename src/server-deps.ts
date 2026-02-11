@@ -8,7 +8,9 @@ import { DispatchWatcher } from './watcher.js';
 import { GitOperations } from './git.js';
 import { RealCommandExecutor } from './command-executor.js';
 import { EventWriter } from './event-writer.js';
+import { readVersions } from './version.js';
 import type { Filesystem } from './status.js';
+import type { Versions } from './version.js';
 
 export interface ServerPaths {
   readonly cwd: string;
@@ -22,25 +24,36 @@ export interface ServerConfig {
   readonly model?: string;
 }
 
+export interface ServerMetadata extends Versions {
+  readonly model: string;
+  readonly cwd: string;
+}
+
 export async function initializeDependencies(
   fs: Filesystem,
   paths: ServerPaths,
   config: ServerConfig
-): Promise<{ logger: Logger; status: StatusManager; watcher: DispatchWatcher }> {
+): Promise<{ logger: Logger; status: StatusManager; watcher: DispatchWatcher; metadata: ServerMetadata }> {
+  const versions = readVersions();
+  const metadata = buildMetadata(versions, config, paths);
   const core = createCoreServices(fs, paths);
-  const watcher = createDispatchWatcher(fs, core, paths, config);
-  return { ...core, watcher };
+  const watcher = createDispatchWatcher(fs, core, paths, metadata);
+  return { ...core, watcher, metadata };
+}
+
+function buildMetadata(versions: Versions, config: ServerConfig, paths: ServerPaths): ServerMetadata {
+  return { ...versions, model: config.model ?? 'claude-opus-4-20250514', cwd: paths.cwd };
 }
 
 function createCoreServices(fs: Filesystem, paths: ServerPaths): { logger: Logger; status: StatusManager } {
   return { logger: new Logger(fs, paths.logPath), status: new StatusManager(fs, paths.statusPath) };
 }
 
-function createDispatchWatcher(fs: Filesystem, core: { logger: Logger; status: StatusManager }, paths: ServerPaths, config: ServerConfig): DispatchWatcher {
-  const runner = createPhaseRunner(fs, core, paths, config);
+function createDispatchWatcher(fs: Filesystem, core: { logger: Logger; status: StatusManager }, paths: ServerPaths, metadata: ServerMetadata): DispatchWatcher {
+  const runner = createPhaseRunner(fs, core, paths, metadata.model);
   const git = createGitOperations();
   const deps = { fs, logger: core.logger, status: core.status, runner, git };
-  const options = { dispatchPath: paths.dispatchPath, pid: process.pid, started: new Date().toISOString() };
+  const options = { dispatchPath: paths.dispatchPath, pid: process.pid, started: new Date().toISOString(), metadata };
   return new DispatchWatcher(deps, options);
 }
 
@@ -48,7 +61,7 @@ function createGitOperations(): GitOperations {
   return new GitOperations(new RealCommandExecutor());
 }
 
-function createPhaseRunner(fs: Filesystem, core: { logger: Logger; status: StatusManager }, paths: ServerPaths, config: ServerConfig): PhaseRunner {
+function createPhaseRunner(fs: Filesystem, core: { logger: Logger; status: StatusManager }, paths: ServerPaths, model: string): PhaseRunner {
   const eventWriter = new EventWriter(fs, paths.eventsPath);
-  return new PhaseRunner(core.logger, core.status, { cwd: paths.cwd, model: config.model ?? 'claude-opus-4-20250514' }, eventWriter, fs);
+  return new PhaseRunner(core.logger, core.status, { cwd: paths.cwd, model }, eventWriter, fs);
 }

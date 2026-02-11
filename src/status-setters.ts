@@ -9,44 +9,29 @@ import type {
 } from './status-inputs.js';
 
 export function buildIdleStatus(input: SetIdleInput): ServiceStatus {
-  return { status: 'idle', pid: input.pid, started: input.started };
+  return {
+    status: 'idle',
+    ...input,
+  };
 }
 
 export function buildBusyStatus(input: SetBusyInput): ServiceStatus {
   return {
     status: 'busy',
-    pid: input.pid,
-    started: input.started,
-    phase: input.phase,
-    phaseStarted: input.phaseStarted,
-    turnsElapsed: input.turnsElapsed,
-    runningCostUsd: input.runningCostUsd,
+    ...input,
   };
 }
 
 export function buildDoneStatus(input: SetDoneInput): ServiceStatus {
   return {
     status: 'done',
-    pid: input.pid,
-    started: input.started,
-    phase: input.phase,
-    phaseStarted: input.phaseStarted,
-    phaseCompleted: input.phaseCompleted,
-    costUsd: input.costUsd,
-    turns: input.turns,
+    ...input,
   };
 }
 
 export function buildBlockedStatus(input: SetBlockedInput): ServiceStatus {
   return {
     status: 'blocked',
-    pid: input.pid,
-    started: input.started,
-    phase: input.phase,
-    phaseStarted: input.phaseStarted,
-    phaseCompleted: input.phaseCompleted,
-    error: input.error,
-    costUsd: input.costUsd,
-    turns: input.turns,
+    ...input,
   };
 }

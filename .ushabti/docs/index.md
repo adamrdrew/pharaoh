@@ -116,7 +116,15 @@ The body (everything after `---`) is the PHASE_PROMPT passed to `/ir-kat`.
 
 ## Status File Schema
 
-`pharaoh.json` reflects the current server state. The schema is a discriminated union based on `status`:
+`pharaoh.json` reflects the current server state. The schema is a discriminated union based on `status`.
+
+All status shapes include metadata fields providing information about the server configuration and state:
+
+- `pharaohVersion`: Pharaoh's package.json version (read once at startup)
+- `ushabtiVersion`: Ushabti dependency's package.json version (read once at startup)
+- `model`: Model ID configured at startup (from `--model` flag or default)
+- `cwd`: Current working directory (process.cwd())
+- `phasesCompleted`: Counter of successfully completed phases (increments only on done transitions, not on blocked)
 
 ### Idle
 
@@ -126,13 +134,18 @@ Server is ready to accept dispatch files.
 {
   "status": "idle",
   "pid": 12345,
-  "started": "2026-02-09T15:00:00.000Z"
+  "started": "2026-02-09T15:00:00.000Z",
+  "pharaohVersion": "0.1.8",
+  "ushabtiVersion": "1.9.5",
+  "model": "claude-opus-4-20250514",
+  "cwd": "/Users/adam/Development/my-project",
+  "phasesCompleted": 0
 }
 ```
 
 ### Busy
 
-Server is executing a phase. The `turnsElapsed` and `runningCostUsd` fields provide real-time progress during execution.
+Server is executing a phase. The `turnsElapsed` and `runningCostUsd` fields provide real-time progress during execution. The `gitBranch` field is only present during busy status.
 
 ```json
 {
@@ -142,19 +155,26 @@ Server is executing a phase. The `turnsElapsed` and `runningCostUsd` fields prov
   "phase": "my-phase",
   "phaseStarted": "2026-02-09T15:01:00.000Z",
   "turnsElapsed": 5,
-  "runningCostUsd": 0.12
+  "runningCostUsd": 0.12,
+  "pharaohVersion": "0.1.8",
+  "ushabtiVersion": "1.9.5",
+  "model": "claude-opus-4-20250514",
+  "cwd": "/Users/adam/Development/my-project",
+  "phasesCompleted": 2,
+  "gitBranch": "pharaoh/my-phase"
 }
 ```
 
 **Fields:**
 - `turnsElapsed`: Number of assistant messages (turns) processed so far
 - `runningCostUsd`: Accumulated cost in USD based on token usage (heuristic using Opus 4 pricing: $15/MTok input, $75/MTok output)
+- `gitBranch`: Current git feature branch created for this phase (only present in busy status)
 
 **Note:** The `runningCostUsd` is a real-time estimate. The final `costUsd` in the `done` or `blocked` status is the authoritative cost from the SDK.
 
 ### Done
 
-Phase completed successfully.
+Phase completed successfully. Note that `phasesCompleted` increments after each successful phase completion.
 
 ```json
 {
@@ -165,13 +185,18 @@ Phase completed successfully.
   "phaseStarted": "2026-02-09T15:01:00.000Z",
   "phaseCompleted": "2026-02-09T15:05:00.000Z",
   "costUsd": 0.45,
-  "turns": 12
+  "turns": 12,
+  "pharaohVersion": "0.1.8",
+  "ushabtiVersion": "1.9.5",
+  "model": "claude-opus-4-20250514",
+  "cwd": "/Users/adam/Development/my-project",
+  "phasesCompleted": 3
 }
 ```
 
 ### Blocked
 
-Phase failed or encountered an error.
+Phase failed or encountered an error. Note that `phasesCompleted` does not increment on blocked transitions.
 
 ```json
 {
@@ -183,7 +208,12 @@ Phase failed or encountered an error.
   "phaseCompleted": "2026-02-09T15:05:00.000Z",
   "error": "Max turns reached",
   "costUsd": 1.20,
-  "turns": 200
+  "turns": 200,
+  "pharaohVersion": "0.1.8",
+  "ushabtiVersion": "1.9.5",
+  "model": "claude-opus-4-20250514",
+  "cwd": "/Users/adam/Development/my-project",
+  "phasesCompleted": 2
 }
 ```
 
