@@ -324,6 +324,20 @@ npm publish --access public
 
 This runs `prepublishOnly` (which calls `npm run build`) automatically. The new version is then available via `npx @adamrdrew/pharaoh serve`.
 
+**7. Clear stale npx caches**
+
+`npx` caches resolved packages in `~/.npm/_npx/`. If you (or a consumer) previously ran `npx @adamrdrew/pharaoh serve`, the old version persists even after publishing. To pick up the new version:
+
+```bash
+# Find which cache entry has Pharaoh
+ls ~/.npm/_npx/*/node_modules/@adamrdrew/pharaoh/package.json 2>/dev/null
+
+# Delete the stale cache directory (the hash will vary)
+rm -rf ~/.npm/_npx/<hash>
+```
+
+The next `npx @adamrdrew/pharaoh serve` invocation will fetch the latest published version.
+
 **Quick reference (the whole thing in one go):**
 
 ```bash
