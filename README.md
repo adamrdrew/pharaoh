@@ -267,6 +267,79 @@ npm run test:watch   # Run tests in watch mode
 npm run serve        # Run from source via tsx
 ```
 
+### Bumping the Ushabti dependency
+
+Pharaoh depends on Ushabti via a GitHub Git reference (`github:adamrdrew/ushabti`). npm resolves this to the latest commit on Ushabti's default branch. The lockfile pins a specific commit hash, so Pharaoh won't pick up new Ushabti changes until you explicitly update.
+
+**1. Push your changes in Ushabti first**
+
+```bash
+cd /path/to/ushabti
+# Bump version in package.json if appropriate
+git add -A && git commit -m "Your changes"
+git push origin master
+```
+
+**2. Update the lockfile in Pharaoh**
+
+```bash
+cd /path/to/pharaoh
+npm update ushabti
+```
+
+This fetches the latest commit from GitHub and updates `package-lock.json` with the new commit hash and version. Verify with:
+
+```bash
+grep -A3 '"node_modules/ushabti"' package-lock.json
+```
+
+You should see the new version and commit hash.
+
+**3. Bump Pharaoh's version**
+
+```bash
+# In package.json, bump the "version" field (e.g. 0.1.5 -> 0.1.6)
+```
+
+**4. Build and test**
+
+```bash
+npm run build
+npm test
+```
+
+**5. Commit and push Pharaoh**
+
+```bash
+git add package.json package-lock.json
+git commit -m "Bump ushabti to <version>"
+git push origin master
+```
+
+**6. Publish to npm**
+
+```bash
+npm publish --access public
+```
+
+This runs `prepublishOnly` (which calls `npm run build`) automatically. The new version is then available via `npx @adamrdrew/pharaoh serve`.
+
+**Quick reference (the whole thing in one go):**
+
+```bash
+# In ushabti/
+git push origin master
+
+# In pharaoh/
+npm update ushabti
+# Edit package.json version
+npm run build && npm test
+git add package.json package-lock.json
+git commit -m "Bump ushabti to <version>"
+git push origin master
+npm publish --access public
+```
+
 ## License
 
 MIT
