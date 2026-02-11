@@ -2,8 +2,8 @@
 export async function prepareGitEnvironment(git, logger, phaseName) {
     const isRepo = await checkIsGitRepo(git);
     if (!isRepo)
-        return;
-    await performGitPreChecks(git, logger, phaseName);
+        return null;
+    return performGitPreChecks(git, logger, phaseName);
 }
 async function checkIsGitRepo(git) {
     const result = await git.isGitRepo();
@@ -12,12 +12,12 @@ async function checkIsGitRepo(git) {
 async function performGitPreChecks(git, logger, phaseName) {
     const branchCheck = await verifyMainBranch(git, logger);
     if (!branchCheck)
-        return;
+        return null;
     const cleanCheck = await verifyCleanWorkingTree(git, logger);
     if (!cleanCheck)
-        return;
+        return null;
     await pullLatestChanges(git, logger);
-    await createFeatureBranch(git, logger, phaseName);
+    return createFeatureBranch(git, logger, phaseName);
 }
 async function verifyMainBranch(git, logger) {
     const result = await git.getCurrentBranch();
@@ -52,6 +52,7 @@ async function createFeatureBranch(git, logger, phaseName) {
         await logger.info('Created feature branch', { branch: branchName });
     else
         await logger.warn('Failed to create feature branch', { branch: branchName, error: result.error });
+    return branchName;
 }
 function slugify(name) {
     return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');

@@ -29,20 +29,21 @@ export class PhaseRunner {
         this.progressDebouncer = new ProgressDebouncer(5000);
         this.statusThrottler = new StatusThrottler(5000);
     }
-    async runPhase(pid, started, phasePrompt, phaseName) {
+    async runPhase(pid, started, phasePrompt, phaseName, gitBranch, metadata, phasesCompleted) {
         const name = phaseName ?? 'unnamed-phase';
         const phaseStarted = new Date().toISOString();
         const startTime = Date.now();
-        await this.initializePhase(pid, started, name, phaseStarted);
+        await this.initializePhase(pid, started, name, phaseStarted, gitBranch, metadata, phasesCompleted);
         const q = createQuery(this.config, this.pluginPath, this.logger, phasePrompt, name);
-        const context = { pid, started, phase: name, phaseStarted };
+        const context = { pid, started, phase: name, phaseStarted, gitBranch, metadata, phasesCompleted };
         const sdkResult = await this.processQueryMessages(q, name, startTime, context);
         return verifyPhaseCompletion(sdkResult, name, this.config.cwd, this.filesystem, this.logger);
     }
-    async initializePhase(pid, started, phaseName, phaseStarted) {
+    async initializePhase(pid, started, phaseName, phaseStarted, gitBranch, metadata, phasesCompleted) {
         await this.eventWriter.clear();
         await this.logger.info('Starting phase execution', { phase: phaseName });
-        await this.status.setBusy({ pid, started, phase: phaseName, phaseStarted, turnsElapsed: 0, runningCostUsd: 0 });
+        const busyInput = { pid, started, phase: phaseName, phaseStarted, turnsElapsed: 0, runningCostUsd: 0, ...metadata, gitBranch: gitBranch ?? '', phasesCompleted };
+        await this.status.setBusy(busyInput);
     }
     async processQueryMessages(q, phaseName, startTime, context) {
         const state = { turns: 0, costUsd: 0, messageCounter: 0, inputTokens: 0, outputTokens: 0, turnsElapsed: 0, runningCostUsd: 0 };
@@ -67,7 +68,8 @@ export class PhaseRunner {
         }
     }
     async updateStatusWithMetrics(state, context) {
-        await this.status.setBusy({ ...context, turnsElapsed: state.turnsElapsed, runningCostUsd: state.runningCostUsd });
+        const { gitBranch, metadata, phasesCompleted, ...baseContext } = context;
+        await this.status.setBusy({ ...baseContext, turnsElapsed: state.turnsElapsed, runningCostUsd: state.runningCostUsd, ...metadata, gitBranch: gitBranch ?? '', phasesCompleted });
     }
 }
 //# sourceMappingURL=runner.js.map

@@ -9,6 +9,7 @@ export class DispatchWatcher {
     watcher = null;
     busy = false;
     queue = [];
+    phasesCompleted = 0;
     constructor(deps, options) {
         this.deps = deps;
         this.options = options;
@@ -66,14 +67,16 @@ export class DispatchWatcher {
         return parseAndValidate(ctx, path);
     }
     async runAndReportPhase(ctx, parsed) {
-        await prepareGitEnvironment(this.deps.git, this.deps.logger, parsed.phase);
-        const result = await this.deps.runner.runPhase(this.options.pid, this.options.started, parsed.body, parsed.phase);
-        if (result.ok)
+        const gitBranch = await prepareGitEnvironment(this.deps.git, this.deps.logger, parsed.phase);
+        const result = await this.deps.runner.runPhase(this.options.pid, this.options.started, parsed.body, parsed.phase, gitBranch, this.options.metadata, this.phasesCompleted);
+        if (result.ok) {
             await finalizeGreenPhase(this.deps.git, this.deps.logger, parsed.phase);
-        await reportPhaseComplete(ctx, parsed.phase, result);
+            this.phasesCompleted += 1;
+        }
+        await reportPhaseComplete(ctx, parsed.phase, result, this.phasesCompleted);
     }
     buildContext() {
-        return { ...this.deps, pid: this.options.pid, started: this.options.started };
+        return { ...this.deps, pid: this.options.pid, started: this.options.started, metadata: this.options.metadata, phasesCompleted: this.phasesCompleted };
     }
 }
 //# sourceMappingURL=watcher.js.map

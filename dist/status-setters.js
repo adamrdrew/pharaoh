@@ -1,41 +1,26 @@
 // Status setter methods
 export function buildIdleStatus(input) {
-    return { status: 'idle', pid: input.pid, started: input.started };
+    return {
+        status: 'idle',
+        ...input,
+    };
 }
 export function buildBusyStatus(input) {
     return {
         status: 'busy',
-        pid: input.pid,
-        started: input.started,
-        phase: input.phase,
-        phaseStarted: input.phaseStarted,
-        turnsElapsed: input.turnsElapsed,
-        runningCostUsd: input.runningCostUsd,
+        ...input,
     };
 }
 export function buildDoneStatus(input) {
     return {
         status: 'done',
-        pid: input.pid,
-        started: input.started,
-        phase: input.phase,
-        phaseStarted: input.phaseStarted,
-        phaseCompleted: input.phaseCompleted,
-        costUsd: input.costUsd,
-        turns: input.turns,
+        ...input,
     };
 }
 export function buildBlockedStatus(input) {
     return {
         status: 'blocked',
-        pid: input.pid,
-        started: input.started,
-        phase: input.phase,
-        phaseStarted: input.phaseStarted,
-        phaseCompleted: input.phaseCompleted,
-        error: input.error,
-        costUsd: input.costUsd,
-        turns: input.turns,
+        ...input,
     };
 }
 //# sourceMappingURL=status-setters.js.map

@@ -22,7 +22,12 @@ export declare class PhaseRunner {
     private readonly progressDebouncer;
     private readonly statusThrottler;
     constructor(logger: Logger, status: StatusManager, config: RunnerConfig, eventWriter: EventWriter, filesystem: Filesystem);
-    runPhase(pid: number, started: string, phasePrompt: string, phaseName?: string): Promise<PhaseResult>;
+    runPhase(pid: number, started: string, phasePrompt: string, phaseName: string | undefined, gitBranch: string | null, metadata: {
+        pharaohVersion: string;
+        ushabtiVersion: string;
+        model: string;
+        cwd: string;
+    }, phasesCompleted: number): Promise<PhaseResult>;
     private initializePhase;
     private processQueryMessages;
     private processMessage;

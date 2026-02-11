@@ -3,10 +3,12 @@ import type { Logger } from './log.js';
 import type { StatusManager } from './status.js';
 import type { PhaseRunner } from './runner.js';
 import type { GitOperations } from './git.js';
+import type { ServerMetadata } from './server-deps.js';
 export interface DispatchWatcherOptions {
     readonly dispatchPath: string;
     readonly pid: number;
     readonly started: string;
+    readonly metadata: ServerMetadata;
 }
 export interface DispatchWatcherDeps {
     readonly fs: Filesystem;
@@ -21,6 +23,7 @@ export declare class DispatchWatcher {
     private watcher;
     private busy;
     private queue;
+    private phasesCompleted;
     constructor(deps: DispatchWatcherDeps, options: DispatchWatcherOptions);
     start(): Promise<void>;
     stop(): Promise<void>;
