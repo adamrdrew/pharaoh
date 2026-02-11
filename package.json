@@ -1,6 +1,6 @@
 {
   "name": "@adamrdrew/pharaoh",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "A filesystem-based job runner built on the Claude Agent SDK",
   "type": "module",
   "bin": {
