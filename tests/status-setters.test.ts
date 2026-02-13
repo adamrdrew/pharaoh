@@ -27,7 +27,7 @@ describe('buildIdleStatus', () => {
     });
   });
 
-  it('does not include gitBranch field', () => {
+  it('does not include gitBranch field when not provided', () => {
     const input = {
       pid: 12345,
       started: '2025-01-01T00:00:00Z',
@@ -39,6 +39,21 @@ describe('buildIdleStatus', () => {
     };
     const status = buildIdleStatus(input);
     expect(status).not.toHaveProperty('gitBranch');
+  });
+
+  it('includes gitBranch field when provided', () => {
+    const input = {
+      pid: 12345,
+      started: '2025-01-01T00:00:00Z',
+      pharaohVersion: '1.0.0',
+      ushabtiVersion: '2.0.0',
+      model: 'claude-opus-4',
+      cwd: '/project',
+      phasesCompleted: 0,
+      gitBranch: 'main',
+    };
+    const status = buildIdleStatus(input);
+    expect(status.gitBranch).toBe('main');
   });
 });
 
@@ -111,7 +126,7 @@ describe('buildDoneStatus', () => {
     });
   });
 
-  it('does not include gitBranch field', () => {
+  it('does not include gitBranch or prUrl when not provided', () => {
     const input = {
       pid: 12345,
       started: '2025-01-01T00:00:00Z',
@@ -128,6 +143,29 @@ describe('buildDoneStatus', () => {
     };
     const status = buildDoneStatus(input);
     expect(status).not.toHaveProperty('gitBranch');
+    expect(status).not.toHaveProperty('prUrl');
+  });
+
+  it('includes gitBranch and prUrl when provided', () => {
+    const input = {
+      pid: 12345,
+      started: '2025-01-01T00:00:00Z',
+      phase: 'test-phase',
+      phaseStarted: '2025-01-01T01:00:00Z',
+      phaseCompleted: '2025-01-01T02:00:00Z',
+      costUsd: 0.15,
+      turns: 10,
+      pharaohVersion: '1.0.0',
+      ushabtiVersion: '2.0.0',
+      model: 'claude-opus-4',
+      cwd: '/project',
+      phasesCompleted: 1,
+      gitBranch: 'pharaoh/test-phase',
+      prUrl: 'https://github.com/user/repo/pull/42',
+    };
+    const status = buildDoneStatus(input);
+    expect(status.gitBranch).toBe('pharaoh/test-phase');
+    expect(status.prUrl).toBe('https://github.com/user/repo/pull/42');
   });
 });
 
@@ -167,7 +205,7 @@ describe('buildBlockedStatus', () => {
     });
   });
 
-  it('does not include gitBranch field', () => {
+  it('does not include gitBranch or prUrl when not provided', () => {
     const input = {
       pid: 12345,
       started: '2025-01-01T00:00:00Z',
@@ -185,6 +223,30 @@ describe('buildBlockedStatus', () => {
     };
     const status = buildBlockedStatus(input);
     expect(status).not.toHaveProperty('gitBranch');
+    expect(status).not.toHaveProperty('prUrl');
+  });
+
+  it('includes gitBranch and prUrl when provided', () => {
+    const input = {
+      pid: 12345,
+      started: '2025-01-01T00:00:00Z',
+      phase: 'test-phase',
+      phaseStarted: '2025-01-01T01:00:00Z',
+      phaseCompleted: '2025-01-01T02:00:00Z',
+      error: 'Phase failed',
+      costUsd: 0.10,
+      turns: 5,
+      pharaohVersion: '1.0.0',
+      ushabtiVersion: '2.0.0',
+      model: 'claude-opus-4',
+      cwd: '/project',
+      phasesCompleted: 0,
+      gitBranch: 'pharaoh/test-phase',
+      prUrl: 'https://github.com/user/repo/pull/42',
+    };
+    const status = buildBlockedStatus(input);
+    expect(status.gitBranch).toBe('pharaoh/test-phase');
+    expect(status.prUrl).toBe('https://github.com/user/repo/pull/42');
   });
 });
 

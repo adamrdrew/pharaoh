@@ -1,0 +1,72 @@
+phase:
+  id: 0008
+  slug: qol-improvements
+  title: Quality of Life Improvements
+  status: complete
+
+steps:
+  - id: S001
+    title: Update type definitions for prUrl and gitBranch
+    implemented: true
+    reviewed: true
+    notes: Added optional prUrl to Done/Blocked types and optional gitBranch to Idle/Done/Blocked types. Updated corresponding input types.
+    touched:
+      - /Users/adam/Development/pharoh/src/types.ts
+      - /Users/adam/Development/pharoh/src/status-inputs.ts
+  - id: S002
+    title: Modify GitOperations to return PR URL
+    implemented: true
+    reviewed: true
+    notes: "Changed openPR return type to GitResult<string> and added extractPRUrl helper to extract PR URL from gh CLI stdout"
+    touched:
+      - /Users/adam/Development/pharoh/src/git.ts
+  - id: S003
+    title: Create PR description builder module
+    implemented: true
+    reviewed: true
+    notes: Created pr-description-builder.ts module with buildPRDescription function that reads phase.md and steps.md to generate rich PR descriptions with fallback handling
+    touched:
+      - /Users/adam/Development/pharoh/src/pr-description-builder.ts
+  - id: S004
+    title: Update git-post-phase to use rich descriptions and capture PR URL
+    implemented: true
+    reviewed: true
+    notes: "Updated git-post-phase to use rich PR descriptions, capture and return PR URL. Updated watcher and watcher-helpers to propagate prUrl through status transitions."
+    touched:
+      - /Users/adam/Development/pharoh/src/git-post-phase.ts
+      - /Users/adam/Development/pharoh/src/watcher.ts
+      - /Users/adam/Development/pharoh/src/watcher-helpers.ts
+  - id: S005
+    title: Track git branch at server startup and through status transitions
+    implemented: true
+    reviewed: true
+    notes: "Added git branch tracking at server startup. Modified server-deps to expose GitOperations, server-startup to query branch and pass to setIdle. Watcher already propagates gitBranch through transitions (completed in S004)."
+    touched:
+      - /Users/adam/Development/pharoh/src/server-deps.ts
+      - /Users/adam/Development/pharoh/src/server-startup.ts
+  - id: S006
+    title: Update tests for new PR URL and gitBranch behavior
+    implemented: true
+    reviewed: true
+    notes: "Created git.test.ts, pr-description-builder.test.ts, git-post-phase.test.ts. Updated status-setters.test.ts and watcher-helpers.test.ts to cover optional prUrl and gitBranch fields. Fixed regex in pr-description-builder to handle sections at end of file. All 135 tests pass."
+    touched:
+      - /Users/adam/Development/pharoh/tests/git.test.ts
+      - /Users/adam/Development/pharoh/tests/pr-description-builder.test.ts
+      - /Users/adam/Development/pharoh/tests/git-post-phase.test.ts
+      - /Users/adam/Development/pharoh/tests/status-setters.test.ts
+      - /Users/adam/Development/pharoh/tests/watcher-helpers.test.ts
+      - /Users/adam/Development/pharoh/src/pr-description-builder.ts
+  - id: S007
+    title: Reconcile documentation with new JSON schema
+    implemented: true
+    reviewed: true
+    notes: "Updated .ushabti/docs/index.md to document optional prUrl and gitBranch fields in idle, done, and blocked status examples. Added documentation for rich PR descriptions including Summary, Scope, and Steps sections."
+    touched:
+      - /Users/adam/Development/pharoh/.ushabti/docs/index.md
+  - id: S008
+    title: Bump package version to 0.1.10
+    implemented: true
+    reviewed: true
+    notes: Bumped version from 0.1.9 to 0.1.10 in package.json
+    touched:
+      - /Users/adam/Development/pharoh/package.json

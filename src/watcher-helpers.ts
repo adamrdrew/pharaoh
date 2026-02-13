@@ -34,19 +34,19 @@ async function handleParseSuccess(ctx: ProcessContext, path: string, file: { pha
   return { ok: true, phase: file.phase ?? 'unnamed-phase', body: file.body };
 }
 
-export async function reportPhaseComplete(ctx: ProcessContext, phaseName: string, result: { ok: boolean; costUsd: number; turns: number; error?: string }, updatedCounter: number): Promise<void> {
+export async function reportPhaseComplete(ctx: ProcessContext, phaseName: string, result: { ok: boolean; costUsd: number; turns: number; error?: string }, updatedCounter: number, prUrl: string | null, gitBranch: string | null): Promise<void> {
   const timestamps = { phaseStarted: new Date().toISOString(), phaseCompleted: new Date().toISOString() };
-  if (result.ok) await reportSuccess(ctx, phaseName, result, timestamps, updatedCounter);
-  else await reportFailure(ctx, phaseName, result, timestamps, updatedCounter);
-  await ctx.status.setIdle({ pid: ctx.pid, started: ctx.started, ...ctx.metadata, phasesCompleted: updatedCounter });
+  if (result.ok) await reportSuccess(ctx, phaseName, result, timestamps, updatedCounter, prUrl, gitBranch);
+  else await reportFailure(ctx, phaseName, result, timestamps, updatedCounter, prUrl, gitBranch);
+  await ctx.status.setIdle({ pid: ctx.pid, started: ctx.started, ...ctx.metadata, phasesCompleted: updatedCounter, gitBranch: gitBranch ?? undefined });
 }
 
-async function reportSuccess(ctx: ProcessContext, phaseName: string, result: { costUsd: number; turns: number }, timestamps: { phaseStarted: string; phaseCompleted: string }, phasesCompleted: number): Promise<void> {
-  await ctx.status.setDone({ pid: ctx.pid, started: ctx.started, phase: phaseName, ...timestamps, costUsd: result.costUsd, turns: result.turns, ...ctx.metadata, phasesCompleted });
+async function reportSuccess(ctx: ProcessContext, phaseName: string, result: { costUsd: number; turns: number }, timestamps: { phaseStarted: string; phaseCompleted: string }, phasesCompleted: number, prUrl: string | null, gitBranch: string | null): Promise<void> {
+  await ctx.status.setDone({ pid: ctx.pid, started: ctx.started, phase: phaseName, ...timestamps, costUsd: result.costUsd, turns: result.turns, ...ctx.metadata, phasesCompleted, prUrl: prUrl ?? undefined, gitBranch: gitBranch ?? undefined });
   await ctx.logger.info('Phase done', { phase: phaseName });
 }
 
-async function reportFailure(ctx: ProcessContext, phaseName: string, result: { costUsd: number; turns: number; error?: string }, timestamps: { phaseStarted: string; phaseCompleted: string }, phasesCompleted: number): Promise<void> {
-  await ctx.status.setBlocked({ pid: ctx.pid, started: ctx.started, phase: phaseName, ...timestamps, error: result.error ?? 'Unknown error', costUsd: result.costUsd, turns: result.turns, ...ctx.metadata, phasesCompleted });
+async function reportFailure(ctx: ProcessContext, phaseName: string, result: { costUsd: number; turns: number; error?: string }, timestamps: { phaseStarted: string; phaseCompleted: string }, phasesCompleted: number, prUrl: string | null, gitBranch: string | null): Promise<void> {
+  await ctx.status.setBlocked({ pid: ctx.pid, started: ctx.started, phase: phaseName, ...timestamps, error: result.error ?? 'Unknown error', costUsd: result.costUsd, turns: result.turns, ...ctx.metadata, phasesCompleted, prUrl: prUrl ?? undefined, gitBranch: gitBranch ?? undefined });
   await ctx.logger.error('Phase blocked', { phase: phaseName, error: result.error });
 }

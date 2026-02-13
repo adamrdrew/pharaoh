@@ -8,6 +8,7 @@ export interface SetIdleInput {
   readonly model: string;
   readonly cwd: string;
   readonly phasesCompleted: number;
+  readonly gitBranch?: string;
 }
 
 export interface SetBusyInput {
@@ -44,6 +45,8 @@ export interface SetDoneInput {
   readonly model: string;
   readonly cwd: string;
   readonly phasesCompleted: number;
+  readonly prUrl?: string;
+  readonly gitBranch?: string;
 }
 
 export interface SetBlockedInput {
@@ -60,4 +63,6 @@ export interface SetBlockedInput {
   readonly model: string;
   readonly cwd: string;
   readonly phasesCompleted: number;
+  readonly prUrl?: string;
+  readonly gitBranch?: string;
 }

@@ -139,9 +139,13 @@ Server is ready to accept dispatch files.
   "ushabtiVersion": "1.9.5",
   "model": "claude-opus-4-20250514",
   "cwd": "/Users/adam/Development/my-project",
-  "phasesCompleted": 0
+  "phasesCompleted": 0,
+  "gitBranch": "main"
 }
 ```
+
+**Optional Fields:**
+- `gitBranch` (string): Current git branch. Only present when running in a git repository.
 
 ### Busy
 
@@ -190,9 +194,15 @@ Phase completed successfully. Note that `phasesCompleted` increments after each 
   "ushabtiVersion": "1.9.5",
   "model": "claude-opus-4-20250514",
   "cwd": "/Users/adam/Development/my-project",
-  "phasesCompleted": 3
+  "phasesCompleted": 3,
+  "prUrl": "https://github.com/user/repo/pull/42",
+  "gitBranch": "pharaoh/my-phase"
 }
 ```
+
+**Optional Fields:**
+- `prUrl` (string): GitHub pull request URL. Only present when `gh` CLI successfully creates a PR.
+- `gitBranch` (string): Git feature branch created for this phase. Only present when running in a git repository.
 
 ### Blocked
 
@@ -213,9 +223,15 @@ Phase failed or encountered an error. Note that `phasesCompleted` does not incre
   "ushabtiVersion": "1.9.5",
   "model": "claude-opus-4-20250514",
   "cwd": "/Users/adam/Development/my-project",
-  "phasesCompleted": 2
+  "phasesCompleted": 2,
+  "prUrl": "https://github.com/user/repo/pull/42",
+  "gitBranch": "pharaoh/my-phase"
 }
 ```
+
+**Optional Fields:**
+- `prUrl` (string): GitHub pull request URL. Only present when `gh` CLI successfully creates a PR.
+- `gitBranch` (string): Git feature branch created for this phase. Only present when running in a git repository.
 
 ### State Transitions
 
@@ -366,6 +382,18 @@ After a phase completes successfully (`done` status), Pharaoh:
 4. Opens a pull request via `gh` CLI (if installed and authenticated)
 
 If `gh` CLI is not available, steps 1-3 still complete and a message is logged with instructions to manually create the PR.
+
+### PR Descriptions
+
+When Pharaoh opens a pull request, it generates a rich markdown description by reading the phase documentation from `.ushabti/phases/{phase-id}-{slug}/`:
+
+- **Summary**: Extracted from the "Intent" section of `phase.md`
+- **Scope**: Extracted from the "Scope" section of `phase.md`
+- **Steps Completed**: List of step titles from `steps.md`
+
+If phase files are missing or unreadable, Pharaoh falls back to a minimal description: `"## Phase {phase-name}\n\nAutomated phase completion via Pharaoh."`
+
+The PR URL returned by `gh pr create` is captured and stored in the `prUrl` field of `pharaoh.json` for both `done` and `blocked` statuses.
 
 ### Non-Git Environments
 

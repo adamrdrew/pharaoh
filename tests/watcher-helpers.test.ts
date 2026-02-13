@@ -74,7 +74,7 @@ describe('reportPhaseComplete counter increment', () => {
     };
     const result = { ok: true, costUsd: 0.15, turns: 10 };
     const updatedCounter = 1;
-    await reportPhaseComplete(ctx, 'test-phase', result, updatedCounter);
+    await reportPhaseComplete(ctx, 'test-phase', result, updatedCounter, null, null);
     const written = fs.getWrittenFile('/pharaoh.json');
     expect(written).toBeDefined();
     const parsed = JSON.parse(written!);
@@ -102,7 +102,7 @@ describe('reportPhaseComplete counter increment', () => {
     };
     const result = { ok: true, costUsd: 0.20, turns: 15 };
     const updatedCounter = 6;
-    await reportPhaseComplete(ctx, 'phase-six', result, updatedCounter);
+    await reportPhaseComplete(ctx, 'phase-six', result, updatedCounter, null, null);
     const written = fs.getWrittenFile('/pharaoh.json');
     expect(written).toBeDefined();
     const parsed = JSON.parse(written!);
@@ -132,7 +132,7 @@ describe('reportPhaseComplete counter increment', () => {
       };
       const result = { ok: true, costUsd: 0.10, turns: 5 };
       currentCounter += 1;
-      await reportPhaseComplete(ctx, `phase-${i + 1}`, result, currentCounter);
+      await reportPhaseComplete(ctx, `phase-${i + 1}`, result, currentCounter, null, null);
       const written = fs.getWrittenFile('/pharaoh.json');
       expect(written).toBeDefined();
       const parsed = JSON.parse(written!);
@@ -163,10 +163,97 @@ describe('reportPhaseComplete counter increment', () => {
     };
     const result = { ok: false, costUsd: 0.05, turns: 3, error: 'Phase failed' };
     const unchangedCounter = 2;
-    await reportPhaseComplete(ctx, 'failed-phase', result, unchangedCounter);
+    await reportPhaseComplete(ctx, 'failed-phase', result, unchangedCounter, null, null);
     const written = fs.getWrittenFile('/pharaoh.json');
     expect(written).toBeDefined();
     const parsed = JSON.parse(written!);
     expect(parsed.phasesCompleted).toBe(2);
+  });
+});
+
+describe('reportPhaseComplete prUrl and gitBranch propagation', () => {
+  it('includes prUrl and gitBranch in done status when provided', async () => {
+    const fs = new FakeFilesystem();
+    const logger = new FakeLogger();
+    const status = new StatusManager(fs, '/pharaoh.json', '/pharaoh.log');
+    const ctx: ProcessContext = {
+      fs,
+      logger,
+      status,
+      pid: 12345,
+      started: '2025-01-01T00:00:00Z',
+      metadata: {
+        pharaohVersion: '1.0.0',
+        ushabtiVersion: '2.0.0',
+        model: 'claude-opus-4',
+        cwd: '/project',
+      },
+      phasesCompleted: 0,
+    };
+    const result = { ok: true, costUsd: 0.15, turns: 10 };
+    const prUrl = 'https://github.com/user/repo/pull/42';
+    const gitBranch = 'pharaoh/test-phase';
+    await reportPhaseComplete(ctx, 'test-phase', result, 1, prUrl, gitBranch);
+    const written = fs.getWrittenFile('/pharaoh.json');
+    expect(written).toBeDefined();
+    const parsed = JSON.parse(written!);
+    expect(parsed.status).toBe('idle');
+    expect(parsed.gitBranch).toBe('pharaoh/test-phase');
+  });
+
+  it('includes prUrl and gitBranch in blocked status when provided', async () => {
+    const fs = new FakeFilesystem();
+    const logger = new FakeLogger();
+    const status = new StatusManager(fs, '/pharaoh.json', '/pharaoh.log');
+    const ctx: ProcessContext = {
+      fs,
+      logger,
+      status,
+      pid: 12345,
+      started: '2025-01-01T00:00:00Z',
+      metadata: {
+        pharaohVersion: '1.0.0',
+        ushabtiVersion: '2.0.0',
+        model: 'claude-opus-4',
+        cwd: '/project',
+      },
+      phasesCompleted: 0,
+    };
+    const result = { ok: false, costUsd: 0.05, turns: 3, error: 'Phase failed' };
+    const prUrl = 'https://github.com/user/repo/pull/42';
+    const gitBranch = 'pharaoh/test-phase';
+    await reportPhaseComplete(ctx, 'test-phase', result, 0, prUrl, gitBranch);
+    const written = fs.getWrittenFile('/pharaoh.json');
+    expect(written).toBeDefined();
+    const parsed = JSON.parse(written!);
+    expect(parsed.status).toBe('idle');
+    expect(parsed.gitBranch).toBe('pharaoh/test-phase');
+  });
+
+  it('omits prUrl and gitBranch when null', async () => {
+    const fs = new FakeFilesystem();
+    const logger = new FakeLogger();
+    const status = new StatusManager(fs, '/pharaoh.json', '/pharaoh.log');
+    const ctx: ProcessContext = {
+      fs,
+      logger,
+      status,
+      pid: 12345,
+      started: '2025-01-01T00:00:00Z',
+      metadata: {
+        pharaohVersion: '1.0.0',
+        ushabtiVersion: '2.0.0',
+        model: 'claude-opus-4',
+        cwd: '/project',
+      },
+      phasesCompleted: 0,
+    };
+    const result = { ok: true, costUsd: 0.15, turns: 10 };
+    await reportPhaseComplete(ctx, 'test-phase', result, 1, null, null);
+    const written = fs.getWrittenFile('/pharaoh.json');
+    expect(written).toBeDefined();
+    const parsed = JSON.parse(written!);
+    expect(parsed.prUrl).toBeUndefined();
+    expect(parsed.gitBranch).toBeUndefined();
   });
 });

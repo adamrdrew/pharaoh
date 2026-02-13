@@ -19,6 +19,7 @@ export interface ServiceStatusIdle {
   readonly model: string;
   readonly cwd: string;
   readonly phasesCompleted: number;
+  readonly gitBranch?: string;
 }
 
 export interface ServiceStatusBusy {
@@ -57,6 +58,8 @@ export interface ServiceStatusDone {
   readonly model: string;
   readonly cwd: string;
   readonly phasesCompleted: number;
+  readonly prUrl?: string;
+  readonly gitBranch?: string;
 }
 
 export interface ServiceStatusBlocked {
@@ -74,6 +77,8 @@ export interface ServiceStatusBlocked {
   readonly model: string;
   readonly cwd: string;
   readonly phasesCompleted: number;
+  readonly prUrl?: string;
+  readonly gitBranch?: string;
 }
 
 /**

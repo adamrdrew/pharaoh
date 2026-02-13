@@ -33,12 +33,13 @@ export async function initializeDependencies(
   fs: Filesystem,
   paths: ServerPaths,
   config: ServerConfig
-): Promise<{ logger: Logger; status: StatusManager; watcher: DispatchWatcher; metadata: ServerMetadata }> {
+): Promise<{ logger: Logger; status: StatusManager; watcher: DispatchWatcher; metadata: ServerMetadata; git: GitOperations }> {
   const versions = readVersions();
   const metadata = buildMetadata(versions, config, paths);
   const core = createCoreServices(fs, paths);
-  const watcher = createDispatchWatcher(fs, core, paths, metadata);
-  return { ...core, watcher, metadata };
+  const git = createGitOperations();
+  const watcher = createDispatchWatcher(fs, core, paths, metadata, git);
+  return { ...core, watcher, metadata, git };
 }
 
 function buildMetadata(versions: Versions, config: ServerConfig, paths: ServerPaths): ServerMetadata {
@@ -49,9 +50,8 @@ function createCoreServices(fs: Filesystem, paths: ServerPaths): { logger: Logge
   return { logger: new Logger(fs, paths.logPath), status: new StatusManager(fs, paths.statusPath) };
 }
 
-function createDispatchWatcher(fs: Filesystem, core: { logger: Logger; status: StatusManager }, paths: ServerPaths, metadata: ServerMetadata): DispatchWatcher {
+function createDispatchWatcher(fs: Filesystem, core: { logger: Logger; status: StatusManager }, paths: ServerPaths, metadata: ServerMetadata, git: GitOperations): DispatchWatcher {
   const runner = createPhaseRunner(fs, core, paths, metadata.model);
-  const git = createGitOperations();
   const deps = { fs, logger: core.logger, status: core.status, runner, git };
   const options = { dispatchPath: paths.dispatchPath, pid: process.pid, started: new Date().toISOString(), metadata };
   return new DispatchWatcher(deps, options);

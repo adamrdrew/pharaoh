@@ -85,11 +85,12 @@ export class DispatchWatcher {
   private async runAndReportPhase(ctx: ProcessContext, parsed: { phase: string; body: string }): Promise<void> {
     const gitBranch = await prepareGitEnvironment(this.deps.git, this.deps.logger, parsed.phase);
     const result = await this.deps.runner.runPhase(this.options.pid, this.options.started, parsed.body, parsed.phase, gitBranch, this.options.metadata, this.phasesCompleted);
+    let prUrl: string | null = null;
     if (result.ok) {
-      await finalizeGreenPhase(this.deps.git, this.deps.logger, parsed.phase);
+      prUrl = await finalizeGreenPhase(this.deps.git, this.deps.logger, parsed.phase, this.deps.fs, this.options.metadata.cwd);
       this.phasesCompleted += 1;
     }
-    await reportPhaseComplete(ctx, parsed.phase, result, this.phasesCompleted);
+    await reportPhaseComplete(ctx, parsed.phase, result, this.phasesCompleted, prUrl, gitBranch);
   }
   private buildContext(): ProcessContext {
     return { ...this.deps, pid: this.options.pid, started: this.options.started, metadata: this.options.metadata, phasesCompleted: this.phasesCompleted };

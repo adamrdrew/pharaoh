@@ -52,10 +52,17 @@ export class GitOperations {
     return result.code === 0 ? { ok: true, value: undefined } : { ok: false, error: result.stderr };
   }
 
-  async openPR(title: string, body: string): Promise<GitResult> {
+  async openPR(title: string, body: string): Promise<GitResult<string>> {
     const ghExists = await this.executor.exists('gh');
     if (!ghExists) return { ok: false, error: 'gh CLI not installed' };
     const result = await this.executor.execute('gh', ['pr', 'create', '--title', title, '--body', body]);
-    return result.code === 0 ? { ok: true, value: undefined } : { ok: false, error: result.stderr };
+    if (result.code !== 0) return { ok: false, error: result.stderr };
+    const prUrl = extractPRUrl(result.stdout);
+    return { ok: true, value: prUrl };
   }
+}
+
+function extractPRUrl(stdout: string): string {
+  const lines = stdout.trim().split('\n');
+  return lines[lines.length - 1].trim();
 }
