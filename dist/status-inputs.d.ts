@@ -6,6 +6,7 @@ export interface SetIdleInput {
     readonly model: string;
     readonly cwd: string;
     readonly phasesCompleted: number;
+    readonly gitBranch?: string;
 }
 export interface SetBusyInput {
     readonly pid: number;
@@ -40,6 +41,8 @@ export interface SetDoneInput {
     readonly model: string;
     readonly cwd: string;
     readonly phasesCompleted: number;
+    readonly prUrl?: string;
+    readonly gitBranch?: string;
 }
 export interface SetBlockedInput {
     readonly pid: number;
@@ -55,5 +58,7 @@ export interface SetBlockedInput {
     readonly model: string;
     readonly cwd: string;
     readonly phasesCompleted: number;
+    readonly prUrl?: string;
+    readonly gitBranch?: string;
 }
 //# sourceMappingURL=status-inputs.d.ts.map

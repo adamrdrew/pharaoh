@@ -28,20 +28,20 @@ async function handleParseSuccess(ctx, path, file) {
     await ctx.logger.info('Dispatch file parsed', { path, phase: file.phase, model: file.model });
     return { ok: true, phase: file.phase ?? 'unnamed-phase', body: file.body };
 }
-export async function reportPhaseComplete(ctx, phaseName, result, updatedCounter) {
+export async function reportPhaseComplete(ctx, phaseName, result, updatedCounter, prUrl, gitBranch) {
     const timestamps = { phaseStarted: new Date().toISOString(), phaseCompleted: new Date().toISOString() };
     if (result.ok)
-        await reportSuccess(ctx, phaseName, result, timestamps, updatedCounter);
+        await reportSuccess(ctx, phaseName, result, timestamps, updatedCounter, prUrl, gitBranch);
     else
-        await reportFailure(ctx, phaseName, result, timestamps, updatedCounter);
-    await ctx.status.setIdle({ pid: ctx.pid, started: ctx.started, ...ctx.metadata, phasesCompleted: updatedCounter });
+        await reportFailure(ctx, phaseName, result, timestamps, updatedCounter, prUrl, gitBranch);
+    await ctx.status.setIdle({ pid: ctx.pid, started: ctx.started, ...ctx.metadata, phasesCompleted: updatedCounter, gitBranch: gitBranch ?? undefined });
 }
-async function reportSuccess(ctx, phaseName, result, timestamps, phasesCompleted) {
-    await ctx.status.setDone({ pid: ctx.pid, started: ctx.started, phase: phaseName, ...timestamps, costUsd: result.costUsd, turns: result.turns, ...ctx.metadata, phasesCompleted });
+async function reportSuccess(ctx, phaseName, result, timestamps, phasesCompleted, prUrl, gitBranch) {
+    await ctx.status.setDone({ pid: ctx.pid, started: ctx.started, phase: phaseName, ...timestamps, costUsd: result.costUsd, turns: result.turns, ...ctx.metadata, phasesCompleted, prUrl: prUrl ?? undefined, gitBranch: gitBranch ?? undefined });
     await ctx.logger.info('Phase done', { phase: phaseName });
 }
-async function reportFailure(ctx, phaseName, result, timestamps, phasesCompleted) {
-    await ctx.status.setBlocked({ pid: ctx.pid, started: ctx.started, phase: phaseName, ...timestamps, error: result.error ?? 'Unknown error', costUsd: result.costUsd, turns: result.turns, ...ctx.metadata, phasesCompleted });
+async function reportFailure(ctx, phaseName, result, timestamps, phasesCompleted, prUrl, gitBranch) {
+    await ctx.status.setBlocked({ pid: ctx.pid, started: ctx.started, phase: phaseName, ...timestamps, error: result.error ?? 'Unknown error', costUsd: result.costUsd, turns: result.turns, ...ctx.metadata, phasesCompleted, prUrl: prUrl ?? undefined, gitBranch: gitBranch ?? undefined });
     await ctx.logger.error('Phase blocked', { phase: phaseName, error: result.error });
 }
 //# sourceMappingURL=watcher-helpers.js.map

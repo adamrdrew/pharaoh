@@ -12,8 +12,9 @@ export async function initializeDependencies(fs, paths, config) {
     const versions = readVersions();
     const metadata = buildMetadata(versions, config, paths);
     const core = createCoreServices(fs, paths);
-    const watcher = createDispatchWatcher(fs, core, paths, metadata);
-    return { ...core, watcher, metadata };
+    const git = createGitOperations();
+    const watcher = createDispatchWatcher(fs, core, paths, metadata, git);
+    return { ...core, watcher, metadata, git };
 }
 function buildMetadata(versions, config, paths) {
     return { ...versions, model: config.model ?? 'claude-opus-4-20250514', cwd: paths.cwd };
@@ -21,9 +22,8 @@ function buildMetadata(versions, config, paths) {
 function createCoreServices(fs, paths) {
     return { logger: new Logger(fs, paths.logPath), status: new StatusManager(fs, paths.statusPath) };
 }
-function createDispatchWatcher(fs, core, paths, metadata) {
+function createDispatchWatcher(fs, core, paths, metadata, git) {
     const runner = createPhaseRunner(fs, core, paths, metadata.model);
-    const git = createGitOperations();
     const deps = { fs, logger: core.logger, status: core.status, runner, git };
     const options = { dispatchPath: paths.dispatchPath, pid: process.pid, started: new Date().toISOString(), metadata };
     return new DispatchWatcher(deps, options);

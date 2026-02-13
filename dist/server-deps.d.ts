@@ -1,6 +1,7 @@
 import { Logger } from './log.js';
 import { StatusManager } from './status.js';
 import { DispatchWatcher } from './watcher.js';
+import { GitOperations } from './git.js';
 import type { Filesystem } from './status.js';
 import type { Versions } from './version.js';
 export interface ServerPaths {
@@ -22,5 +23,6 @@ export declare function initializeDependencies(fs: Filesystem, paths: ServerPath
     status: StatusManager;
     watcher: DispatchWatcher;
     metadata: ServerMetadata;
+    git: GitOperations;
 }>;
 //# sourceMappingURL=server-deps.d.ts.map

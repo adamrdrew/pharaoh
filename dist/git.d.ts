@@ -24,6 +24,6 @@ export declare class GitOperations {
     stageAll(): Promise<GitResult>;
     commit(message: string): Promise<GitResult>;
     push(branch: string): Promise<GitResult>;
-    openPR(title: string, body: string): Promise<GitResult>;
+    openPR(title: string, body: string): Promise<GitResult<string>>;
 }
 //# sourceMappingURL=git.d.ts.map

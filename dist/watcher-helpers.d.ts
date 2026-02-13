@@ -12,5 +12,5 @@ export declare function reportPhaseComplete(ctx: ProcessContext, phaseName: stri
     costUsd: number;
     turns: number;
     error?: string;
-}, updatedCounter: number): Promise<void>;
+}, updatedCounter: number, prUrl: string | null, gitBranch: string | null): Promise<void>;
 //# sourceMappingURL=watcher-helpers.d.ts.map

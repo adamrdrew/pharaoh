@@ -12,6 +12,7 @@ export interface ServiceStatusIdle {
     readonly model: string;
     readonly cwd: string;
     readonly phasesCompleted: number;
+    readonly gitBranch?: string;
 }
 export interface ServiceStatusBusy {
     readonly status: 'busy';
@@ -48,6 +49,8 @@ export interface ServiceStatusDone {
     readonly model: string;
     readonly cwd: string;
     readonly phasesCompleted: number;
+    readonly prUrl?: string;
+    readonly gitBranch?: string;
 }
 export interface ServiceStatusBlocked {
     readonly status: 'blocked';
@@ -64,6 +67,8 @@ export interface ServiceStatusBlocked {
     readonly model: string;
     readonly cwd: string;
     readonly phasesCompleted: number;
+    readonly prUrl?: string;
+    readonly gitBranch?: string;
 }
 /**
  * Dispatch file structure (markdown with YAML frontmatter)
