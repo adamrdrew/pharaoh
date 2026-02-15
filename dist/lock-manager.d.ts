@@ -1,5 +1,6 @@
 import type { LockResult } from './lock-types.js';
 import type { Filesystem } from './status.js';
+import type { PidChecker } from './lock-pid.js';
 /**
  * Lock manager interface for dependency injection
  */
@@ -21,16 +22,5 @@ export declare class RealLockManager implements LockManager {
     validate(): Promise<boolean>;
     release(): Promise<void>;
 }
-/**
- * PID liveness checker interface for testing
- */
-export interface PidChecker {
-    isRunning(pid: number): boolean;
-}
-/**
- * Real PID checker using process.kill(pid, 0)
- */
-export declare class RealPidChecker implements PidChecker {
-    isRunning(pid: number): boolean;
-}
+export { PidChecker, RealPidChecker } from './lock-pid.js';
 //# sourceMappingURL=lock-manager.d.ts.map

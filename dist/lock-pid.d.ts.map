@@ -1,0 +1,1 @@
+{"version":3,"file":"lock-pid.d.ts","sourceRoot":"","sources":["../src/lock-pid.ts"],"names":[],"mappings":"AAEA;;GAEG;AACH,MAAM,WAAW,UAAU;IACzB,SAAS,CAAC,GAAG,EAAE,MAAM,GAAG,OAAO,CAAC;CACjC;AAED;;GAEG;AACH,qBAAa,cAAe,YAAW,UAAU;IAC/C,SAAS,CAAC,GAAG,EAAE,MAAM,GAAG,OAAO;CAGhC"}
