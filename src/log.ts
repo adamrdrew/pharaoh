@@ -1,55 +1,30 @@
 // Structured logger for pharaoh.log
 
 import type { Filesystem } from './status.js';
+import type { LogLevel, LoggerConfig, LogContext } from './log-types.js';
+import { logLevelPriority } from './log-types.js';
+import { formatTimestamp, formatContext } from './log-formatting.js';
 
-/**
- * Log level enumeration
- */
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-
-/**
- * Structured context for log entries
- */
-export type LogContext = Record<string, unknown>;
+// Re-export types for backward compatibility
+export type { LogLevel, LoggerConfig, LogContext } from './log-types.js';
 
 /**
  * Structured logger that writes timestamped entries to pharaoh.log
  */
 export class Logger {
+  private readonly minLevel: LogLevel;
+
   constructor(
     private readonly fs: Filesystem,
-    private readonly logPath: string
-  ) {}
-
-  private formatTimestamp(): string {
-    const now = new Date();
-    const datePart = this.formatDate(now);
-    const timePart = this.formatTime(now);
-    return `${datePart} ${timePart}`;
+    private readonly logPath: string,
+    config?: LoggerConfig
+  ) {
+    this.minLevel = config?.minLevel ?? 'debug';
   }
 
-  private formatDate(now: Date): string {
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
 
-  private formatTime(now: Date): string {
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    return `${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * Format context object as JSON string
-   */
-  private formatContext(context?: LogContext): string {
-    if (!context || Object.keys(context).length === 0) {
-      return '';
-    }
-    return ` ${JSON.stringify(context)}`;
+  private shouldLog(level: LogLevel): boolean {
+    return logLevelPriority[level] >= logLevelPriority[this.minLevel];
   }
 
   private async write(level: LogLevel, message: string, context?: LogContext): Promise<void> {
@@ -58,8 +33,8 @@ export class Logger {
   }
 
   private buildLogEntry(level: LogLevel, message: string, context?: LogContext): string {
-    const timestamp = this.formatTimestamp();
-    const contextStr = this.formatContext(context);
+    const timestamp = formatTimestamp(new Date());
+    const contextStr = formatContext(context);
     return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}\n`;
   }
 
@@ -67,27 +42,35 @@ export class Logger {
    * Log debug message (verbose internal state)
    */
   async debug(message: string, context?: LogContext): Promise<void> {
-    await this.write('debug', message, context);
+    if (this.shouldLog('debug')) {
+      await this.write('debug', message, context);
+    }
   }
 
   /**
    * Log info message (normal operations)
    */
   async info(message: string, context?: LogContext): Promise<void> {
-    await this.write('info', message, context);
+    if (this.shouldLog('info')) {
+      await this.write('info', message, context);
+    }
   }
 
   /**
    * Log warning (recoverable errors)
    */
   async warn(message: string, context?: LogContext): Promise<void> {
-    await this.write('warn', message, context);
+    if (this.shouldLog('warn')) {
+      await this.write('warn', message, context);
+    }
   }
 
   /**
    * Log error (unrecoverable errors)
    */
   async error(message: string, context?: LogContext): Promise<void> {
-    await this.write('error', message, context);
+    if (this.shouldLog('error')) {
+      await this.write('error', message, context);
+    }
   }
 }

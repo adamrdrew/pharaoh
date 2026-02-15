@@ -358,6 +358,33 @@ Each event has the following fields:
 - `WARN`: Recoverable errors (file disappeared, transient failures)
 - `ERROR`: Unrecoverable errors (parse failures, SDK errors)
 
+### Log Level Filtering
+
+The Logger supports filtering by minimum log level to control log output verbosity. By default, all log levels are written (minimum level is `debug`). This ensures backward compatibility with existing code that creates loggers without configuration.
+
+**Creating a logger with log level filtering:**
+
+```typescript
+import { Logger } from './log.js';
+import { RealFilesystem } from './filesystem.js';
+
+// Default: all logs written (debug, info, warn, error)
+const defaultLogger = new Logger(fs, '/path/to/pharaoh.log');
+
+// Filter: suppress debug logs, keep info and above
+const infoLogger = new Logger(fs, '/path/to/pharaoh.log', { minLevel: 'info' });
+
+// Filter: suppress debug and info, keep warn and above
+const warnLogger = new Logger(fs, '/path/to/pharaoh.log', { minLevel: 'warn' });
+
+// Filter: only error logs written
+const errorLogger = new Logger(fs, '/path/to/pharaoh.log', { minLevel: 'error' });
+```
+
+**Log level ordering:** `debug` < `info` < `warn` < `error`
+
+**Filtering behavior:** Log entries with a level below the configured minimum are suppressed and not written to the log file. For example, if `minLevel` is `warn`, then `debug()` and `info()` calls produce no output, while `warn()` and `error()` calls are written normally.
+
 ## Git Integration
 
 Pharaoh automates git workflows around phase execution when running in a git repository.
@@ -532,6 +559,27 @@ Pharaoh invokes the Claude Agent SDK with:
 - **Permissions**: Bypass mode with sandbox enabled
 - **Max turns**: 200 for main phase execution
 - **Hooks**: `PreToolUse` blocks `AskUserQuestion` with message "Proceed with your best judgement"
+
+#### Agent Sandbox Enforcement
+
+Pharaoh enforces strict sandbox boundaries on the spawned Claude Code agent to prevent filesystem traversal and sandbox bypass attempts.
+
+**Sandbox bypass protection:**
+- The `dangerouslyDisableSandbox` flag on Bash tool calls is blocked unconditionally
+- Any attempt to disable the sandbox returns a block decision with reason: `"dangerouslyDisableSandbox is not permitted. Fix the underlying issue instead of disabling the sandbox."`
+- All sandbox bypass attempts are logged to `pharaoh.log` with phase context
+
+**Path validation on filesystem tools:**
+- All filesystem tools (`Read`, `Write`, `Edit`, `Glob`, `Grep`) validate paths against an allowlist containing `config.cwd` (the project directory)
+- Paths outside the permitted directories are blocked with a clear message indicating the rejected path and the allowed directories
+- Path validation uses `path.resolve()` to normalize paths, catching traversal attempts using `../` that would escape the project directory
+- Optional path fields on `Glob` and `Grep` tools are allowed when absent (defaults to current working directory)
+- Path violations are logged to `pharaoh.log` with phase context
+
+**Implementation:**
+- Path validation logic lives in `runner-path-validation.ts`
+- Hook handlers live in `runner-hook-handlers.ts`
+- `PreToolUse` hooks configured via `createHookOptions` in `runner-query.ts`
 
 ### Phase Status Verification
 

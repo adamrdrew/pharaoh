@@ -1,26 +1,15 @@
 import type { Filesystem } from './status.js';
-/**
- * Log level enumeration
- */
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-/**
- * Structured context for log entries
- */
-export type LogContext = Record<string, unknown>;
+import type { LoggerConfig, LogContext } from './log-types.js';
+export type { LogLevel, LoggerConfig, LogContext } from './log-types.js';
 /**
  * Structured logger that writes timestamped entries to pharaoh.log
  */
 export declare class Logger {
     private readonly fs;
     private readonly logPath;
-    constructor(fs: Filesystem, logPath: string);
-    private formatTimestamp;
-    private formatDate;
-    private formatTime;
-    /**
-     * Format context object as JSON string
-     */
-    private formatContext;
+    private readonly minLevel;
+    constructor(fs: Filesystem, logPath: string, config?: LoggerConfig);
+    private shouldLog;
     private write;
     private buildLogEntry;
     /**

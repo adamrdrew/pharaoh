@@ -1,0 +1,63 @@
+phase:
+  id: 0011
+  slug: version-compare-utility
+  title: Version Compare Utility
+  status: complete
+
+steps:
+  - id: S001
+    title: Create version comparison types
+    implemented: true
+    reviewed: true
+    notes: Defined VersionComparison discriminated union type
+    touched:
+      - src/version-compare.ts
+  - id: S002
+    title: Create version parsing helper
+    implemented: true
+    reviewed: true
+    notes: Created parseVersion helper with Version interface and regex extraction
+    touched:
+      - src/version-compare.ts
+  - id: S003
+    title: Implement compareVersions function
+    implemented: true
+    reviewed: true
+    notes: Implemented compareVersions function with invalid format handling
+    touched:
+      - src/version-compare.ts
+  - id: S004
+    title: Extract comparison logic helper
+    implemented: true
+    reviewed: true
+    notes: Extracted compareParsedVersions helper and refactored for Sandi Metz compliance
+    touched:
+      - src/version-compare.ts
+  - id: S005
+    title: Write tests for valid version comparisons
+    implemented: true
+    reviewed: true
+    notes: "Added tests for valid version comparisons (major, minor, patch, less, equal)"
+    touched:
+      - tests/version-compare.test.ts
+  - id: S006
+    title: Write tests for invalid version formats
+    implemented: true
+    reviewed: true
+    notes: "Added tests for invalid formats (non-semver, missing components, non-numeric, both invalid)"
+    touched:
+      - tests/version-compare.test.ts
+  - id: S007
+    title: Write tests for edge cases
+    implemented: true
+    reviewed: true
+    notes: "Added edge case tests for zero versions and large numbers, all passing"
+    touched:
+      - tests/version-compare.test.ts
+  - id: S008
+    title: Run full test suite
+    implemented: true
+    reviewed: true
+    notes: "Full test suite passes: 183 tests including 11 new version-compare tests, no regressions"
+    touched:
+      - tests/version-compare.test.ts

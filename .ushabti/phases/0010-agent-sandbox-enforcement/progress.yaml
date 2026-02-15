@@ -1,0 +1,93 @@
+phase:
+  id: 0010
+  slug: agent-sandbox-enforcement
+  title: Agent Sandbox Enforcement
+  status: complete
+
+steps:
+  - id: S001
+    title: Thread config into createHookOptions
+    implemented: true
+    reviewed: true
+    notes: "Threaded config through to createBlockHook, built allowedPaths array"
+    touched:
+      - /Users/adam/Development/pharoh/src/runner-query.ts
+  - id: S002
+    title: Block dangerouslyDisableSandbox in hook
+    implemented: true
+    reviewed: true
+    notes: Added sandbox bypass detection and blocking logic
+    touched:
+      - /Users/adam/Development/pharoh/src/runner-query.ts
+  - id: S003
+    title: Extract path validation helper
+    implemented: true
+    reviewed: true
+    notes: Created isPathAllowed helper with path normalization
+    touched:
+      - /Users/adam/Development/pharoh/src/runner-query.ts
+  - id: S004
+    title: Validate paths on Read, Write, Edit tools
+    implemented: true
+    reviewed: true
+    notes: "Added path validation for Read, Write, Edit tools"
+    touched:
+      - /Users/adam/Development/pharoh/src/runner-query.ts
+  - id: S005
+    title: Validate paths on Glob, Grep tools
+    implemented: true
+    reviewed: true
+    notes: Added optional path validation for Glob and Grep tools
+    touched:
+      - /Users/adam/Development/pharoh/src/runner-query.ts
+  - id: S006
+    title: Write tests for sandbox flag blocking
+    implemented: true
+    reviewed: true
+    notes: Created test file with sandbox flag blocking tests
+    touched:
+      - /Users/adam/Development/pharoh/tests/runner-query.test.ts
+  - id: S007
+    title: Write tests for path validation
+    implemented: true
+    reviewed: true
+    notes: "Added path validation tests for Read, Glob, and traversal blocking"
+    touched:
+      - /Users/adam/Development/pharoh/tests/runner-query.test.ts
+  - id: S008
+    title: Write tests for Write and Edit tools
+    implemented: true
+    reviewed: true
+    notes: Added Write and Edit path validation tests
+    touched:
+      - /Users/adam/Development/pharoh/tests/runner-query.test.ts
+  - id: S009
+    title: Verify AskUserQuestion still blocked
+    implemented: true
+    reviewed: true
+    notes: Added test verifying AskUserQuestion blocking unchanged
+    touched:
+      - /Users/adam/Development/pharoh/tests/runner-query.test.ts
+  - id: S010
+    title: Run all tests and confirm no regressions
+    implemented: true
+    reviewed: true
+    notes: "All tests pass, no regressions"
+    touched:
+      - /Users/adam/Development/pharoh/tests/runner-query.test.ts
+  - id: S011
+    title: Split runner-query.ts to respect 100-line limit
+    implemented: true
+    reviewed: true
+    notes: "Extracted path validation to runner-path-validation.ts and hook handlers to runner-hook-handlers.ts. runner-query.ts now 45 lines, under 100-line limit. All tests pass."
+    touched:
+      - /Users/adam/Development/pharoh/src/runner-query.ts
+      - /Users/adam/Development/pharoh/src/runner-path-validation.ts
+      - /Users/adam/Development/pharoh/src/runner-hook-handlers.ts
+  - id: S012
+    title: Document sandbox enforcement in .ushabti/docs/index.md
+    implemented: true
+    reviewed: true
+    notes: "Added Agent Sandbox Enforcement subsection under SDK Configuration in index.md. Documented sandbox bypass blocking, path validation, path normalization, and implementation modules."
+    touched:
+      - /Users/adam/Development/pharoh/.ushabti/docs/index.md

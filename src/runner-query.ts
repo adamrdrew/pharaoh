@@ -3,6 +3,7 @@
 import { query, type Query } from '@anthropic-ai/claude-agent-sdk';
 import type { Logger } from './log.js';
 import type { RunnerConfig } from './runner.js';
+import { createBlockHook } from './runner-hook-handlers.js';
 
 export function createQuery(
   config: RunnerConfig,
@@ -21,7 +22,7 @@ export function createQuery(
 function buildQueryOptions(config: RunnerConfig, pluginPath: string, logger: Logger, phaseName: string): Record<string, unknown> {
   const baseOptions = createBaseOptions(config, pluginPath);
   const securityOptions = createSecurityOptions();
-  const hookOptions = createHookOptions(logger, phaseName);
+  const hookOptions = createHookOptions(config, logger, phaseName);
   return { ...baseOptions, ...securityOptions, ...hookOptions };
 }
 
@@ -33,23 +34,11 @@ function createSecurityOptions(): Record<string, unknown> {
   return { permissionMode: 'bypassPermissions', allowDangerouslySkipPermissions: true, sandbox: { enabled: true, autoAllowBashIfSandboxed: true } };
 }
 
-function createHookOptions(logger: Logger, phaseName: string): Record<string, unknown> {
-  return { hooks: { PreToolUse: [{ hooks: [createBlockHook(logger, phaseName)] }] } };
+export function createHookOptions(config: RunnerConfig, logger: Logger, phaseName: string): Record<string, unknown> {
+  const allowedPaths = buildAllowedPaths(config);
+  return { hooks: { PreToolUse: [{ hooks: [createBlockHook(allowedPaths, logger, phaseName)] }] } };
 }
 
-function createBlockHook(logger: Logger, phaseName: string): (input: unknown) => Promise<unknown> {
-  return async (input: unknown): Promise<unknown> => {
-    const typedInput = input as { hook_event_name?: string; tool_name?: string };
-    if (isAskUserQuestion(typedInput)) return handleBlockedQuestion(logger, phaseName);
-    return { continue: true };
-  };
-}
-
-function isAskUserQuestion(input: { hook_event_name?: string; tool_name?: string }): boolean {
-  return input.hook_event_name === 'PreToolUse' && input.tool_name === 'AskUserQuestion';
-}
-
-async function handleBlockedQuestion(logger: Logger, phaseName: string): Promise<unknown> {
-  await logger.info('Blocked AskUserQuestion', { phase: phaseName });
-  return { continue: true, decision: 'block', systemMessage: 'Proceed with your best judgement' };
+function buildAllowedPaths(config: RunnerConfig): string[] {
+  return [config.cwd];
 }
