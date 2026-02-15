@@ -1,0 +1,35 @@
+phase:
+  id: 0012
+  slug: fix-lock-manager-instance
+  title: Fix Lock Manager Instance Discarded During Server Startup
+  status: complete
+
+steps:
+  - id: S001
+    title: Modify prepareServer to return lock manager
+    implemented: true
+    reviewed: true
+    notes: Modified prepareServer and acquireInstanceLock to return LockManager instance
+    touched:
+      - /Users/adam/Development/pharoh/src/server.ts
+  - id: S002
+    title: Thread lock manager through to initializeDependencies
+    implemented: true
+    reviewed: true
+    notes: Threaded lock manager from serve through launchServer to initializeDependencies
+    touched:
+      - /Users/adam/Development/pharoh/src/server.ts
+      - /Users/adam/Development/pharoh/src/server-deps.ts
+  - id: S003
+    title: Remove duplicate lock manager instantiation
+    implemented: true
+    reviewed: true
+    notes: Removed createLockManager helper and unused imports; initializeDependencies now uses injected lock
+    touched:
+      - /Users/adam/Development/pharoh/src/server-deps.ts
+  - id: S004
+    title: Verify tests pass
+    implemented: true
+    reviewed: true
+    notes: All 183 tests pass across 26 test files
+    touched: []
