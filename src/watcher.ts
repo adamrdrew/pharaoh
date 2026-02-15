@@ -7,6 +7,7 @@ import type { StatusManager } from './status.js';
 import type { PhaseRunner } from './runner.js';
 import type { GitOperations } from './git.js';
 import type { ServerMetadata } from './server-deps.js';
+import type { LockManager } from './lock-manager.js';
 import { checkFileExists, parseAndValidate, reportPhaseComplete } from './watcher-helpers.js';
 import { createWatcher } from './watcher-setup.js';
 import type { ProcessContext } from './watcher-context.js';
@@ -26,6 +27,7 @@ export interface DispatchWatcherDeps {
   readonly status: StatusManager;
   readonly runner: PhaseRunner;
   readonly git: GitOperations;
+  readonly lock: LockManager;
 }
 
 export class DispatchWatcher {
@@ -68,8 +70,24 @@ export class DispatchWatcher {
   private async processDispatchFile(path: string): Promise<void> {
     this.busy = true;
     await this.deps.logger.info('Processing dispatch file', { path });
+    const lockValid = await this.validateLockOwnership();
+    if (!lockValid) return this.abortDispatch(path);
     await this.executeDispatchFile(path);
     this.busy = false;
+  }
+
+  private async validateLockOwnership(): Promise<boolean> {
+    return this.deps.lock.validate();
+  }
+
+  private async abortDispatch(path: string): Promise<void> {
+    await this.deps.logger.error('Lock validation failed, aborting dispatch', { path });
+    await this.deps.status.setIdle(this.buildIdleInput());
+    this.busy = false;
+  }
+
+  private buildIdleInput(): { pid: number; started: string; pharaohVersion: string; ushabtiVersion: string; model: string; cwd: string; phasesCompleted: number } {
+    return { pid: this.options.pid, started: this.options.started, pharaohVersion: this.options.metadata.pharaohVersion, ushabtiVersion: this.options.metadata.ushabtiVersion, model: this.options.metadata.model, cwd: this.options.metadata.cwd, phasesCompleted: this.phasesCompleted };
   }
   private async executeDispatchFile(path: string): Promise<void> {
     const ctx = this.buildContext();

@@ -48,4 +48,13 @@ export class RealFilesystem implements Filesystem {
     const stats = await fs.stat(path);
     return { isDirectory: () => stats.isDirectory(), mtimeMs: stats.mtimeMs };
   }
+
+  async openExclusive(path: string, content: string): Promise<void> {
+    const handle = await fs.open(path, 'wx');
+    try {
+      await handle.writeFile(content, 'utf-8');
+    } finally {
+      await handle.close();
+    }
+  }
 }

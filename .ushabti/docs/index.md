@@ -16,6 +16,7 @@ A filesystem-based job runner built on the Claude Agent SDK. Pharaoh watches a d
 - [Event Stream](#event-stream)
 - [Pharaoh Log](#pharaoh-log)
 - [Git Integration](#git-integration)
+- [Lock File](#lock-file)
 - [Architecture](#architecture)
 
 ## How to Run
@@ -81,6 +82,7 @@ kill -TERM <pid>
 
 The server performs graceful shutdown:
 - Stops the watcher
+- Releases the lock file
 - Removes `pharaoh.json`
 - Logs shutdown event
 
@@ -399,6 +401,97 @@ The PR URL returned by `gh pr create` is captured and stored in the `prUrl` fiel
 
 When Pharaoh runs in a directory that is not a git repository, all git operations are silently skipped. This allows Pharaoh to work in any environment without requiring git configuration.
 
+## Lock File
+
+Pharaoh uses an exclusive lock file to prevent concurrent instances from corrupting shared project state. Multiple Pharaoh processes targeting the same directory create data races on git operations, `.ushabti/phases/` state, `pharaoh.json`, and source files. The lock mechanism makes concurrent execution impossible.
+
+### Lock File Location
+
+`.pharaoh/pharaoh.lock`
+
+### Lock File Format
+
+The lock file is a JSON document with three fields:
+
+```json
+{
+  "pid": 12345,
+  "started": "2026-02-15T06:00:00.000Z",
+  "instanceId": "a1b2c3d4e5f6g7h8"
+}
+```
+
+- `pid` (number): Process ID of the lock holder
+- `started` (string): ISO8601 timestamp when the instance started
+- `instanceId` (string): Random 16-character hex identifier unique to this instance
+
+### Lock Acquisition
+
+When Pharaoh starts, it attempts to create `.pharaoh/pharaoh.lock` exclusively using Node.js `fs.open` with the `wx` flag. If the file already exists, Pharaoh reads it and checks if the PID is still running.
+
+#### Success Cases
+
+- **No lock exists**: Lock is created immediately and startup proceeds
+- **Stale lock exists**: If the PID in the lock file is not running, the old lock is treated as stale and overwritten. A warning is logged with the old PID and start time.
+
+#### Failure Case
+
+If the lock file exists and the PID is still running, startup fails immediately with an error message:
+
+```
+Failed to start: Lock acquire failed: lock held by another process (held by PID 12345, started 2026-02-15T06:00:00.000Z)
+```
+
+Pharaoh exits with code 1.
+
+### Lock Validation
+
+Pharaoh validates lock ownership at two points during execution:
+
+1. **Pre-dispatch**: Before processing any dispatch file, the watcher checks that it still holds the lock. If validation fails, the dispatch is aborted and the server transitions to `idle`.
+
+2. **During execution**: Every 10 turns during phase execution, the runner validates lock ownership. If the lock is stolen or deleted, the phase is aborted immediately and the result is marked as `blocked` with error `"Lock stolen during execution"`.
+
+Lock validation compares the `instanceId` in the lock file to the instance's own `instanceId`. If they don't match, or if the file is missing, validation fails.
+
+### Lock Release
+
+Pharaoh releases the lock file during graceful shutdown (SIGTERM or SIGINT). The shutdown handler:
+
+1. Stops the watcher
+2. Releases the lock (deletes `.pharaoh/pharaoh.lock`)
+3. Removes `pharaoh.json`
+4. Exits
+
+If the process is killed forcefully (SIGKILL), the lock file remains and becomes stale. The next Pharaoh instance detects the stale lock and overwrites it.
+
+### Stale Lock Recovery
+
+If Pharaoh finds a lock file but the PID is not running, it logs a warning and overwrites the lock:
+
+```
+[WARN] Stale lock detected {"pid":12345,"started":"2026-02-15T06:00:00.000Z"}
+```
+
+This handles cases where:
+- Pharaoh was killed forcefully (SIGKILL)
+- The system crashed
+- The lock file was left behind after an unclean shutdown
+
+### Manual Lock Recovery
+
+If Pharaoh refuses to start due to a lock conflict but you know no other instance is running:
+
+1. Check if the PID in the lock file is running: `ps -p <pid>`
+2. If the process is not Pharaoh, or is not running, manually delete the lock: `rm .pharaoh/pharaoh.lock`
+3. Restart Pharaoh
+
+**Warning**: Do not delete the lock file while another Pharaoh instance is running. This will cause data corruption.
+
+### PID Reuse
+
+On some systems, PIDs can be reused quickly. The lock file includes a `started` timestamp to reduce false positives. If a stale lock's PID is reused by an unrelated process, Pharaoh logs a warning and proceeds (acceptable risk; manual intervention available).
+
 ## Architecture
 
 ### Modules
@@ -407,6 +500,8 @@ Pharaoh uses a flat `src/` directory with single-responsibility modules:
 
 - `index.ts` — CLI entry point, server initialization, and version reading
 - `types.ts` — Discriminated union types for status and results
+- `lock-types.ts` — Discriminated union types for lock states
+- `lock-manager.ts` — Single-instance lock enforcement with PID-based locking
 - `status.ts` — Atomic reads/writes for `pharaoh.json`
 - `log.ts` — Structured logging to `pharaoh.log`
 - `parser.ts` — Dispatch file parsing (frontmatter + body)

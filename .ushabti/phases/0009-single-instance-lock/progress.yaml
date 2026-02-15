@@ -1,0 +1,123 @@
+phase:
+  id: 0009
+  slug: single-instance-lock
+  title: Single-Instance Lock
+  status: complete
+
+steps:
+  - id: S001
+    title: Define lock types and results
+    implemented: true
+    reviewed: true
+    notes: Lock types defined with discriminated unions
+    touched:
+      - src/lock-types.ts
+  - id: S002
+    title: Create LockManager interface and implementation
+    implemented: true
+    reviewed: true
+    notes: LockManager interface and RealLockManager implementation with PID-based locking
+    touched:
+      - src/lock-manager.ts
+  - id: S003
+    title: Extend Filesystem interface for lock file operations
+    implemented: true
+    reviewed: true
+    notes: "Extended Filesystem interface with openExclusive method, updated RealFilesystem and RealLockManager"
+    touched:
+      - src/status.ts
+      - src/filesystem.ts
+      - src/lock-manager.ts
+  - id: S004
+    title: Integrate lock acquisition into server startup
+    implemented: true
+    reviewed: true
+    notes: Integrated lock acquisition into server startup with fail-fast on conflict
+    touched:
+      - src/server.ts
+      - src/server-deps.ts
+      - src/server-paths.ts
+  - id: S005
+    title: Add pre-dispatch lock validation in watcher
+    implemented: true
+    reviewed: true
+    notes: Added pre-dispatch lock validation in watcher with abort on failure
+    touched:
+      - src/watcher.ts
+  - id: S006
+    title: Add periodic lock validation during phase execution
+    implemented: true
+    reviewed: true
+    notes: Added periodic lock validation during phase execution every 10 turns
+    touched:
+      - src/runner.ts
+      - src/server-deps.ts
+  - id: S007
+    title: Add lock release to shutdown handler
+    implemented: true
+    reviewed: true
+    notes: Added lock release to shutdown handler
+    touched:
+      - src/shutdown.ts
+  - id: S008
+    title: Implement fake lock manager for testing
+    implemented: true
+    reviewed: true
+    notes: Implemented fake lock manager with test helpers
+    touched:
+      - tests/fakes/fake-lock-manager.ts
+  - id: S009
+    title: Test lock acquisition and conflict detection
+    implemented: true
+    reviewed: true
+    notes: "Lock manager tests covering acquisition, conflict, stale detection, validation, and release"
+    touched:
+      - tests/lock-manager.test.ts
+      - src/lock-manager.ts
+  - id: S010
+    title: Test server startup lock integration
+    implemented: true
+    reviewed: true
+    notes: "Server startup lock integration tests covering acquisition, conflict, and stale detection"
+    touched:
+      - tests/server.test.ts
+  - id: S011
+    title: Test watcher pre-dispatch validation
+    implemented: true
+    reviewed: true
+    notes: Watcher pre-dispatch lock validation tests covering abort on failure
+    touched:
+      - tests/watcher-lock.test.ts
+  - id: S012
+    title: Test runner periodic validation
+    implemented: true
+    reviewed: true
+    notes: Runner periodic lock validation tests covering validation frequency and failure handling
+    touched:
+      - tests/runner-lock.test.ts
+  - id: S013
+    title: Test shutdown lock release
+    implemented: true
+    reviewed: true
+    notes: Shutdown lock release tests covering release and ordering
+    touched:
+      - tests/shutdown.test.ts
+  - id: S014
+    title: Update documentation
+    implemented: true
+    reviewed: true
+    notes: "Documentation updated with lock file behavior, location, format, and recovery procedures"
+    touched:
+      - .ushabti/docs/index.md
+  - id: S015
+    title: Decompose lock-manager.ts to comply with 100-line limit
+    implemented: true
+    reviewed: true
+    notes: "Decomposed lock-manager.ts into lock-acquire.ts (75 lines), lock-validate.ts (24 lines), lock-release.ts (20 lines), lock-io.ts (35 lines), lock-pid.ts (26 lines). Main lock-manager.ts reduced to 60 lines. All modules under 100-line limit. Typecheck and all 151 tests pass."
+    touched:
+      - src/lock-manager.ts
+      - src/lock-acquire.ts
+      - src/lock-validate.ts
+      - src/lock-release.ts
+      - src/lock-io.ts
+      - src/lock-pid.ts

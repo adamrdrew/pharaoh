@@ -3,12 +3,14 @@
 import type { Logger } from './log.js';
 import type { StatusManager } from './status.js';
 import type { DispatchWatcher } from './watcher.js';
+import type { LockManager } from './lock-manager.js';
 import process from 'node:process';
 
 export interface ShutdownDependencies {
   readonly logger: Logger;
   readonly status: StatusManager;
   readonly watcher: DispatchWatcher;
+  readonly lock: LockManager;
 }
 
 export function registerShutdownHandlers(deps: ShutdownDependencies): void {
@@ -23,6 +25,8 @@ function createShutdownHandler(deps: ShutdownDependencies): () => Promise<void> 
   return async (): Promise<void> => {
     await deps.logger.info('Shutting down gracefully');
     await deps.watcher.stop();
+    await deps.lock.release();
+    await deps.logger.info('Lock released');
     await deps.status.remove();
     await deps.logger.info('Shutdown complete');
     process.exit(0);

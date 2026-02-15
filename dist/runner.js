@@ -16,15 +16,17 @@ export class PhaseRunner {
     config;
     eventWriter;
     filesystem;
+    lock;
     pluginPath;
     progressDebouncer;
     statusThrottler;
-    constructor(logger, status, config, eventWriter, filesystem) {
+    constructor(logger, status, config, eventWriter, filesystem, lock) {
         this.logger = logger;
         this.status = status;
         this.config = config;
         this.eventWriter = eventWriter;
         this.filesystem = filesystem;
+        this.lock = lock;
         this.pluginPath = resolvePluginPath();
         this.progressDebouncer = new ProgressDebouncer(5000);
         this.statusThrottler = new StatusThrottler(5000);
@@ -59,8 +61,20 @@ export class PhaseRunner {
         if (result)
             return result;
         updateState(message, state);
+        const lockValid = await this.validateLockPeriodically(state.turns);
+        if (!lockValid)
+            return this.buildLockFailureResult(phaseName, state, startTime);
         await this.updateStatusIfNeeded(state, context);
         return null;
+    }
+    async validateLockPeriodically(turns) {
+        if (turns % 10 !== 0)
+            return true;
+        return this.lock.validate();
+    }
+    buildLockFailureResult(phaseName, state, startTime) {
+        this.logger.error('Lock validation failed during phase execution', { phase: phaseName, turns: state.turns });
+        return { ok: false, reason: 'blocked', error: 'Lock stolen during execution', costUsd: state.costUsd, turns: state.turns, durationMs: Date.now() - startTime };
     }
     async updateStatusIfNeeded(state, context) {
         if (this.statusThrottler.shouldWrite()) {

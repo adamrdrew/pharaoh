@@ -38,5 +38,14 @@ export class RealFilesystem {
         const stats = await fs.stat(path);
         return { isDirectory: () => stats.isDirectory(), mtimeMs: stats.mtimeMs };
     }
+    async openExclusive(path, content) {
+        const handle = await fs.open(path, 'wx');
+        try {
+            await handle.writeFile(content, 'utf-8');
+        }
+        finally {
+            await handle.close();
+        }
+    }
 }
 //# sourceMappingURL=filesystem.js.map

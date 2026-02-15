@@ -9,5 +9,5 @@ export function buildPaths(cwd: string): ServerPaths {
 }
 
 function createServerPaths(cwd: string, pharaohDir: string): ServerPaths {
-  return { cwd, dispatchPath: path.join(pharaohDir, 'dispatch'), statusPath: path.join(pharaohDir, 'pharaoh.json'), logPath: path.join(pharaohDir, 'pharaoh.log'), eventsPath: path.join(pharaohDir, 'events.jsonl') };
+  return { cwd, dispatchPath: path.join(pharaohDir, 'dispatch'), statusPath: path.join(pharaohDir, 'pharaoh.json'), logPath: path.join(pharaohDir, 'pharaoh.log'), eventsPath: path.join(pharaohDir, 'events.jsonl'), lockPath: path.join(pharaohDir, 'pharaoh.lock') };
 }

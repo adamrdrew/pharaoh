@@ -11,6 +11,8 @@ function createShutdownHandler(deps) {
     return async () => {
         await deps.logger.info('Shutting down gracefully');
         await deps.watcher.stop();
+        await deps.lock.release();
+        await deps.logger.info('Lock released');
         await deps.status.remove();
         await deps.logger.info('Shutdown complete');
         process.exit(0);

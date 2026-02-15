@@ -2,6 +2,7 @@ import type { PhaseResult } from './types.js';
 import type { Logger } from './log.js';
 import type { StatusManager, Filesystem } from './status.js';
 import type { EventWriter } from './event-writer.js';
+import type { LockManager } from './lock-manager.js';
 /**
  * Configuration for phase execution
  */
@@ -18,10 +19,11 @@ export declare class PhaseRunner {
     private readonly config;
     private readonly eventWriter;
     private readonly filesystem;
+    private readonly lock;
     private readonly pluginPath;
     private readonly progressDebouncer;
     private readonly statusThrottler;
-    constructor(logger: Logger, status: StatusManager, config: RunnerConfig, eventWriter: EventWriter, filesystem: Filesystem);
+    constructor(logger: Logger, status: StatusManager, config: RunnerConfig, eventWriter: EventWriter, filesystem: Filesystem, lock: LockManager);
     runPhase(pid: number, started: string, phasePrompt: string, phaseName: string | undefined, gitBranch: string | null, metadata: {
         pharaohVersion: string;
         ushabtiVersion: string;
@@ -31,6 +33,8 @@ export declare class PhaseRunner {
     private initializePhase;
     private processQueryMessages;
     private processMessage;
+    private validateLockPeriodically;
+    private buildLockFailureResult;
     private updateStatusIfNeeded;
     private updateStatusWithMetrics;
 }

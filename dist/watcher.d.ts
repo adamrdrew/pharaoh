@@ -4,6 +4,7 @@ import type { StatusManager } from './status.js';
 import type { PhaseRunner } from './runner.js';
 import type { GitOperations } from './git.js';
 import type { ServerMetadata } from './server-deps.js';
+import type { LockManager } from './lock-manager.js';
 export interface DispatchWatcherOptions {
     readonly dispatchPath: string;
     readonly pid: number;
@@ -16,6 +17,7 @@ export interface DispatchWatcherDeps {
     readonly status: StatusManager;
     readonly runner: PhaseRunner;
     readonly git: GitOperations;
+    readonly lock: LockManager;
 }
 export declare class DispatchWatcher {
     private readonly deps;
@@ -32,6 +34,9 @@ export declare class DispatchWatcher {
     private processQueue;
     private processNextInQueue;
     private processDispatchFile;
+    private validateLockOwnership;
+    private abortDispatch;
+    private buildIdleInput;
     private executeDispatchFile;
     private validateDispatchFile;
     private runAndReportPhase;

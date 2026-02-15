@@ -9,8 +9,10 @@ import { GitOperations } from './git.js';
 import { RealCommandExecutor } from './command-executor.js';
 import { EventWriter } from './event-writer.js';
 import { readVersions } from './version.js';
+import { RealLockManager, RealPidChecker } from './lock-manager.js';
 import type { Filesystem } from './status.js';
 import type { Versions } from './version.js';
+import type { LockManager } from './lock-manager.js';
 
 export interface ServerPaths {
   readonly cwd: string;
@@ -18,6 +20,7 @@ export interface ServerPaths {
   readonly statusPath: string;
   readonly logPath: string;
   readonly eventsPath: string;
+  readonly lockPath: string;
 }
 
 export interface ServerConfig {
@@ -33,13 +36,14 @@ export async function initializeDependencies(
   fs: Filesystem,
   paths: ServerPaths,
   config: ServerConfig
-): Promise<{ logger: Logger; status: StatusManager; watcher: DispatchWatcher; metadata: ServerMetadata; git: GitOperations }> {
+): Promise<{ logger: Logger; status: StatusManager; watcher: DispatchWatcher; metadata: ServerMetadata; git: GitOperations; lock: LockManager }> {
   const versions = readVersions();
   const metadata = buildMetadata(versions, config, paths);
   const core = createCoreServices(fs, paths);
+  const lock = createLockManager(fs, paths);
   const git = createGitOperations();
-  const watcher = createDispatchWatcher(fs, core, paths, metadata, git);
-  return { ...core, watcher, metadata, git };
+  const watcher = createDispatchWatcher(fs, core, paths, metadata, git, lock);
+  return { ...core, watcher, metadata, git, lock };
 }
 
 function buildMetadata(versions: Versions, config: ServerConfig, paths: ServerPaths): ServerMetadata {
@@ -50,9 +54,13 @@ function createCoreServices(fs: Filesystem, paths: ServerPaths): { logger: Logge
   return { logger: new Logger(fs, paths.logPath), status: new StatusManager(fs, paths.statusPath) };
 }
 
-function createDispatchWatcher(fs: Filesystem, core: { logger: Logger; status: StatusManager }, paths: ServerPaths, metadata: ServerMetadata, git: GitOperations): DispatchWatcher {
-  const runner = createPhaseRunner(fs, core, paths, metadata.model);
-  const deps = { fs, logger: core.logger, status: core.status, runner, git };
+function createLockManager(fs: Filesystem, paths: ServerPaths): LockManager {
+  return new RealLockManager(fs, paths.lockPath, new RealPidChecker());
+}
+
+function createDispatchWatcher(fs: Filesystem, core: { logger: Logger; status: StatusManager }, paths: ServerPaths, metadata: ServerMetadata, git: GitOperations, lock: LockManager): DispatchWatcher {
+  const runner = createPhaseRunner(fs, core, paths, metadata.model, lock);
+  const deps = { fs, logger: core.logger, status: core.status, runner, git, lock };
   const options = { dispatchPath: paths.dispatchPath, pid: process.pid, started: new Date().toISOString(), metadata };
   return new DispatchWatcher(deps, options);
 }
@@ -61,7 +69,7 @@ function createGitOperations(): GitOperations {
   return new GitOperations(new RealCommandExecutor());
 }
 
-function createPhaseRunner(fs: Filesystem, core: { logger: Logger; status: StatusManager }, paths: ServerPaths, model: string): PhaseRunner {
+function createPhaseRunner(fs: Filesystem, core: { logger: Logger; status: StatusManager }, paths: ServerPaths, model: string, lock: LockManager): PhaseRunner {
   const eventWriter = new EventWriter(fs, paths.eventsPath);
-  return new PhaseRunner(core.logger, core.status, { cwd: paths.cwd, model }, eventWriter, fs);
+  return new PhaseRunner(core.logger, core.status, { cwd: paths.cwd, model }, eventWriter, fs, lock);
 }

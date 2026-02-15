@@ -31,6 +31,7 @@ export interface Filesystem {
   exists(path: string): Promise<boolean>;
   readdir(path: string): Promise<string[]>;
   stat(path: string): Promise<FilesystemStats>;
+  openExclusive(path: string, content: string): Promise<void>;
 }
 
 export type { ReadResult };

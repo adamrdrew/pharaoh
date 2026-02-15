@@ -50,8 +50,22 @@ export class DispatchWatcher {
     async processDispatchFile(path) {
         this.busy = true;
         await this.deps.logger.info('Processing dispatch file', { path });
+        const lockValid = await this.validateLockOwnership();
+        if (!lockValid)
+            return this.abortDispatch(path);
         await this.executeDispatchFile(path);
         this.busy = false;
+    }
+    async validateLockOwnership() {
+        return this.deps.lock.validate();
+    }
+    async abortDispatch(path) {
+        await this.deps.logger.error('Lock validation failed, aborting dispatch', { path });
+        await this.deps.status.setIdle(this.buildIdleInput());
+        this.busy = false;
+    }
+    buildIdleInput() {
+        return { pid: this.options.pid, started: this.options.started, pharaohVersion: this.options.metadata.pharaohVersion, ushabtiVersion: this.options.metadata.ushabtiVersion, model: this.options.metadata.model, cwd: this.options.metadata.cwd, phasesCompleted: this.phasesCompleted };
     }
     async executeDispatchFile(path) {
         const ctx = this.buildContext();
