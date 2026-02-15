@@ -8,12 +8,10 @@ import { GitOperations } from './git.js';
 import { RealCommandExecutor } from './command-executor.js';
 import { EventWriter } from './event-writer.js';
 import { readVersions } from './version.js';
-import { RealLockManager, RealPidChecker } from './lock-manager.js';
-export async function initializeDependencies(fs, paths, config) {
+export async function initializeDependencies(fs, paths, config, lock) {
     const versions = readVersions();
     const metadata = buildMetadata(versions, config, paths);
     const core = createCoreServices(fs, paths);
-    const lock = createLockManager(fs, paths);
     const git = createGitOperations();
     const watcher = createDispatchWatcher(fs, core, paths, metadata, git, lock);
     return { ...core, watcher, metadata, git, lock };
@@ -23,9 +21,6 @@ function buildMetadata(versions, config, paths) {
 }
 function createCoreServices(fs, paths) {
     return { logger: new Logger(fs, paths.logPath), status: new StatusManager(fs, paths.statusPath) };
-}
-function createLockManager(fs, paths) {
-    return new RealLockManager(fs, paths.lockPath, new RealPidChecker());
 }
 function createDispatchWatcher(fs, core, paths, metadata, git, lock) {
     const runner = createPhaseRunner(fs, core, paths, metadata.model, lock);

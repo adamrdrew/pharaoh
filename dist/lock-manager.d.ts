@@ -22,5 +22,6 @@ export declare class RealLockManager implements LockManager {
     validate(): Promise<boolean>;
     release(): Promise<void>;
 }
-export { PidChecker, RealPidChecker } from './lock-pid.js';
+export type { PidChecker } from './lock-pid.js';
+export { RealPidChecker } from './lock-pid.js';
 //# sourceMappingURL=lock-manager.d.ts.map

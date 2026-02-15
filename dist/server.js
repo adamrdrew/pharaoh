@@ -10,25 +10,26 @@ import { RealLockManager, RealPidChecker } from './lock-manager.js';
 export async function serve(config) {
     const paths = buildPaths(process.cwd());
     const fs = new RealFilesystem();
-    await prepareServer(fs, paths);
-    await launchServer(fs, paths, config);
+    const lock = await prepareServer(fs, paths);
+    await launchServer(fs, paths, config, lock);
 }
 async function prepareServer(fs, paths) {
     await ensureDirectories(fs, paths);
-    await acquireInstanceLock(fs, paths);
+    return await acquireInstanceLock(fs, paths);
 }
 async function acquireInstanceLock(fs, paths) {
     const lock = new RealLockManager(fs, paths.lockPath, new RealPidChecker());
     const result = await lock.acquire();
     if (!result.ok)
         handleLockFailure(result.error);
+    return lock;
 }
 function handleLockFailure(error) {
     console.error(`Failed to start: ${error.message}`);
     process.exit(1);
 }
-async function launchServer(fs, paths, config) {
-    const dependencies = await initializeDependencies(fs, paths, config);
+async function launchServer(fs, paths, config, lock) {
+    const dependencies = await initializeDependencies(fs, paths, config, lock);
     registerShutdownHandlers(dependencies);
     await startServer(dependencies, paths);
 }

@@ -20,7 +20,7 @@ export interface ServerMetadata extends Versions {
     readonly model: string;
     readonly cwd: string;
 }
-export declare function initializeDependencies(fs: Filesystem, paths: ServerPaths, config: ServerConfig): Promise<{
+export declare function initializeDependencies(fs: Filesystem, paths: ServerPaths, config: ServerConfig, lock: LockManager): Promise<{
     logger: Logger;
     status: StatusManager;
     watcher: DispatchWatcher;

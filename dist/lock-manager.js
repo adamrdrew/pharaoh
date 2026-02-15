@@ -26,6 +26,5 @@ export class RealLockManager {
         this.currentLock = undefined;
     }
 }
-// Re-export for convenience
 export { RealPidChecker } from './lock-pid.js';
 //# sourceMappingURL=lock-manager.js.map
